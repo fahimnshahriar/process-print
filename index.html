@@ -37,6 +37,7 @@ button.ghost{background:transparent}
 .seg button[aria-selected=true]{background:var(--accent);color:var(--accent-fg)}
 .gs{margin-bottom:12px;border:1px solid var(--line);border-radius:4px;padding:8px 12px}
 .gs summary{cursor:pointer;font-weight:600}
+.row.oneline{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.row.oneline label.f{flex:none}
 .pname{font-size:15px;font-weight:600;flex:1 1 280px;min-width:0;align-self:end;padding-bottom:6px;line-height:1.3}
 .pname small{display:block;font-weight:400;color:var(--muted);font-size:13px}
 .pname.bad{color:var(--warn)}
@@ -59,8 +60,17 @@ td.calc.bad{color:var(--warn)}
 .steps input{padding:4px 5px}
 .steps select{padding:4px 3px}
 .stepbtn{padding:3px 7px}
+.steps tr.insrow td{padding:0;border:0;height:0;line-height:0;position:relative}
+.steps tr[data-i] td:first-child{padding-left:24px}
+.insbtn{position:absolute;left:3px;top:-7px;z-index:3;padding:0;width:16px;height:14px;line-height:12px;font-size:12px;font-weight:700;border-radius:7px;color:var(--accent);border-color:var(--accent);background:var(--panel);opacity:.55}
+.insbtn:hover,.insbtn:focus-visible{opacity:1;background:var(--accent);color:var(--accent-fg)}
 .stepbtn.del{color:var(--warn)}
-.steps tr.hl td{background:var(--sel)}
+.steps tr[data-i] td{background:color-mix(in srgb,var(--sc,#ccc) 28%,transparent)}
+.steps tr[data-i] td:first-child{border-left:7px solid var(--sc,#ccc)}
+.steps tr.hl td{background:color-mix(in srgb,var(--sc,#ccc) 62%,transparent)}
+.sn{display:inline-block;min-width:18px;font-weight:800;font-size:12px;margin-right:2px}
+@keyframes moved{0%{background:var(--sc)}100%{background:color-mix(in srgb,var(--sc,#ccc) 28%,transparent)}}
+.steps tr.moved td{animation:moved 1.6s ease-out;border-top:2px solid var(--sc);border-bottom:2px solid var(--sc)}
 .sheetwrap{max-width:1200px}
 .sheet{display:flex;flex-direction:column;justify-content:space-between;background:#fff;color:#222;width:210mm;height:297mm;margin:0 auto 14px;padding:12mm 14mm 18mm;box-shadow:0 1px 6px rgba(0,0,0,.25);position:relative;font-family:Arial,Helvetica,sans-serif;page-break-after:always;break-after:page}
 .sheet>*{flex:none}.sheet>.graphbox{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}.sheet:last-child{page-break-after:auto;break-after:auto}
@@ -99,6 +109,7 @@ td.calc.bad{color:var(--warn)}
 .water .wb small{font-size:8pt;letter-spacing:.08em;color:#444}
 .water .wb i{flex:1;border-bottom:1.1.2px solid #555;min-width:14mm;height:5mm}
 .sign{display:flex;align-items:flex-end;gap:3mm;font-size:9.5pt;font-weight:700}
+.chkbox .sign{padding:1mm 3.5mm 2mm}
 .sign i{flex:1;border-bottom:1.1.2px solid #555;height:5mm}
 .note{font-size:9.5pt;font-weight:700;text-align:center;margin:0;padding:1mm 3mm;border:1px dashed #666;border-radius:2mm;background:#fafafa}
 .chkbox{border:1px solid #555;border-radius:2mm;overflow:hidden}
@@ -140,18 +151,20 @@ td.calc.bad{color:var(--warn)}
     <label class="f">Process no<input id="fPno" class="n" list="pnoList" autocomplete="off" placeholder="e.g. 19"></label>
     <datalist id="pnoList"></datalist>
     <div class="pname" id="pname"></div>
+  </div>
+  <div class="row oneline" style="margin-bottom:10px">
     <label class="f">GSM<input id="fGsm" class="num" inputmode="decimal"></label>
     <label class="f">Dia<input id="fDia" class="num" inputmode="decimal"></label>
     <label class="f">Dia unit<select id="fUnit"><option value="in">inch</option><option value="cm">cm</option></select></label>
     <label class="f">Load kg (optional)<input id="fKg" class="num" inputmode="decimal"></label>
     <label class="f">L:R (optional)<input id="fLr" class="sm" inputmode="decimal"></label>
+    <label class="f">Absorbency (L/kg)<input id="abs" class="num" type="number" step="0.1" min="0" value="2"></label>
+    <label class="f">Cycle time (min)<input id="cyc" class="num" type="number" step="0.1" min="0.1" value="2"></label>
   </div>
   <div class="res" id="res"></div>
   <div class="row" style="margin-top:12px"><button class="pri" id="btnPrint2" type="button" style="font-size:15px;padding:9px 22px">Print this sheet</button></div>
   <div class="row" style="margin:12px 0 4px">
     <label class="f">Date<input id="fDate" type="date" style="width:150px"></label>
-    <label class="f">Cycle time (min)<input id="cyc" class="num" type="number" step="0.1" min="0.1" value="2"></label>
-    <label class="f">Absorbency (L/kg)<input id="abs" class="num" type="number" step="0.1" min="0" value="2"></label>
     <label class="f">Tank fills deducted<input id="fills" class="num" type="number" step="1" min="0" value="4"></label>
     <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optLev" checked> Show levelling water</label>
     <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optChecks" checked> Print check list</label>
@@ -349,7 +362,7 @@ function graphSVG(p,hi){
   let tk='';ticks.forEach(t=>{tk+=`<line x1="${t[0]}" y1="${t[1]}" x2="${t[0]}" y2="${t[1]+7}" stroke="${INK}" stroke-width="1"/>`});
   // pH check tag
   const ph=`<g><rect x="${AX}" y="${BASE-136}" width="72" height="26" rx="2" fill="#fff" stroke="${INK}" stroke-width="1.3"/>`+tx('pH CHECK',AX+36,BASE-119,{fs:11,w:700})+`<line x1="${AX+36}" y1="${BASE-110}" x2="${AX+36}" y2="${BASE-70}" stroke="${INK}" stroke-width="1.3"/><path d="M${AX+30} ${BASE-76} L${AX+36} ${BASE-66} L${AX+42} ${BASE-76} Z" fill="#777"/></g>`;
-  let hl='';if(hi!=null&&ext[hi])hl=`<rect x="${ext[hi][0]-2}" y="6" width="${ext[hi][1]+4}" height="${H-12}" rx="4" fill="#ffd84d" opacity="0.55"/>`;
+  let hl='';if(hi!=null&&ext[hi])hl=`<rect x="${ext[hi][0]-2}" y="6" width="${ext[hi][1]+4}" height="${H-12}" rx="4" fill="${(window.__COLS||[])[(steps[hi]||{}).c]||'#ffd84d'}" opacity="0.6"/>`;
   const base=`<path d="${path}" fill="none" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${H}" preserveAspectRatio="xMinYMid meet" style="font-family:Arial,Helvetica,sans-serif">${hl}${g}${base}${tk}${out}${ph}</svg>`;
 }
@@ -359,7 +372,8 @@ const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function fmtDate(v){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(v||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''}
 function sheetHTML(r,c){
   const p=proc(r.proc);const mc=parseInt(r.mc,10);
-  const chk=S.chk?`<div class="chkbox"><div class="chk-h">QUALITY CHECKS</div><div class="checks">${CHECKS[p.chk].map(t=>`<div><span class="bx"></span><span>${esc(t)}</span><span class="ln"></span></div>`).join('')}</div></div>`:'';
+  const SIGN='<div class="sign">SUPERVISOR’S SIGNATURE <i></i></div>';
+  const chk=S.chk?`<div class="chkbox"><div class="chk-h">QUALITY CHECKS</div><div class="checks">${CHECKS[p.chk].map(t=>`<div><span class="bx"></span><span>${esc(t)}</span><span class="ln"></span></div>`).join('')}</div>${SIGN}</div>`:SIGN;
   const lw=c.ok?`${f(c.lw,2)} g/m`:'', rl=c.ok?`${f(c.rl,1)} m`:'', rs=c.ok?`${f(c.reel,0)} m/min`:'';
   const lev=c.ok&&c.lev>0?`${Math.round(c.lev)} L`:'';
   const dia=r.gsm?`${esc(r.dia)} ${r.unit==='cm'?'cm':'inch'}${c.ok&&r.unit==='cm'?` (${f(c.inch,1)} in)`:''}`:'';
@@ -377,7 +391,6 @@ function sheetHTML(r,c){
     <div class="k">REEL SPEED</div><div><b>${rs}</b></div><div></div>
     <div class="k">C/T</div><div><b>${esc(S.cyc)} min</b></div><div></div></div>
   ${water}
-  <div class="sign">SUPERVISOR’S SIGNATURE <i></i></div>
   <div class="graphbox g2"><div class="gb-h"><span>PROCESS GRAPH</span><span>START ${esc(p.t0)}°C</span></div><div class="gb-s">${graphSVG(p).replace('xMinYMid','xMidYMid')}</div></div>
   ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
   ${chk}
@@ -495,17 +508,22 @@ $('gchip').textContent='☁ Google script connected';$('gchip').title=GS.url+'\n
 $('gchip').onclick=()=>{try{navigator.clipboard.writeText(GS.url);gsMsg('Script URL copied')}catch(e){}};
 
 // ---------- UI: graph editor
-let EID=null,HI=null;
+let EID=null,HI=null,MV=null;
+const COLS=['#ff8f8f','#ffb762','#f2d83b','#7fd35a','#3fc8bd','#5fa2ff','#a98aff','#ff7ac8'];
+const newColor=p=>{const u=p.steps.map(x=>x.c);const f=COLS.map((_,i)=>i).filter(i=>!u.includes(i));return f.length?f[0]:Math.floor(Math.random()*COLS.length)};
 function setHi(i){if(HI===i)return;HI=i;const p=proc(EID);$('edPrev').innerHTML=graphSVG(p,HI);document.querySelectorAll('#steps tr').forEach(tr=>tr.classList.toggle('hl',+tr.dataset.i===HI))}
 const TYPES=[['G','Plain line'],['R','Rectangle - linear'],['M','Slope both sides - migration'],['T','Triangle - recirculation'],['U','Ramp up - progressive']];
 function edProc(){if(!EID)return EMPTY();return S.custom[ck(EID)]||(S.custom[ck(EID)]=clone(orig(EID)))}
+window.__COLS=COLS;
 function renderEditor(){
   const ids=allIds();if(!ids.includes(EID))EID=ids[0]||null;
   $('edProc').innerHTML=procOptions(EID);
   const p=proc(EID);
+  p.steps.forEach((x,i)=>{if(x.c==null)x.c=i%COLS.length});
   $('edT0').value=p.t0;$('edTitle').value=p.title;
-  $('steps').innerHTML=p.steps.map((s,i)=>`<tr data-i="${i}">
-   <td style="white-space:nowrap"><button class="ghost stepbtn" data-mv="-1" aria-label="Move up" title="Move up">↑</button><button class="ghost stepbtn" data-mv="1" aria-label="Move down" title="Move down">↓</button><button class="ghost stepbtn del" data-rm="1" aria-label="Delete step" title="Delete this step">✕ Delete</button></td>
+  const INS=i=>`<tr class="insrow"><td colspan="9"><button type="button" class="insbtn" data-ins="${i}" title="Add a step here" aria-label="Add a step here">+</button></td></tr>`;
+  $('steps').innerHTML=p.steps.map((s,i)=>(i>0?INS(i):'')+`<tr data-i="${i}" class="${i===MV?'moved':''}" style="--sc:${COLS[s.c]}">
+   <td style="white-space:nowrap"><b class="sn">${i+1}</b><button class="ghost stepbtn" data-mv="-1" aria-label="Move up" title="Move up">↑</button><button class="ghost stepbtn" data-mv="1" aria-label="Move down" title="Move down">↓</button><button class="ghost stepbtn del" data-rm="1" aria-label="Delete step" title="Delete this step">✕ Delete</button></td>
    <td><select data-k="t" aria-label="Shape">${TYPES.map(t=>`<option value="${t[0]}"${s.t===t[0]?' selected':''}>${t[1]}</option>`).join('')}</select></td>
    <td><input class="sm" data-k="m" value="${esc(s.m)}" ${s.t==='M'||s.t==='U'?'disabled':''} aria-label="Minutes"></td>
    <td><input data-k="top" value="${esc(s.top)}" aria-label="Label above" style="min-width:110px"></td>
@@ -514,24 +532,26 @@ function renderEditor(){
    <td><input class="sm" data-k="dn" value="${esc(s.dn)}" ${s.t==='M'?'':'disabled'} aria-label="Rate down"></td>
    <td><input class="sm" data-k="t2" value="${esc(s.t2)}" ${s.t==='M'||s.t==='U'?'':'disabled'} aria-label="Temp after"></td></tr>`).join('');
   $('edPrev').innerHTML=graphSVG(p,HI);
+  if(MV!=null){const mr=document.querySelector('#steps tr.moved');if(mr)mr.scrollIntoView({block:'nearest'});MV=null}
   $('edWarn').innerHTML=!EID?'<span class="warn">No process in this unit yet. Press "Copy as new process" to create one.</span>':p.verify?'<span class="warn">The graph in the Word file for this process was cut off or hard to read. Check it against the original before printing.</span>':'';
 }
 function edChanged(){save();markDirty();$('edPrev').innerHTML=graphSVG(proc(EID),HI);renderSheets();renderRows()}
 $('edProc').onchange=e=>{EID=e.target.value;cur().proc=EID;S.rows=[cur()];renderEditor();renderRows();renderSheets();save()};
 $('edT0').addEventListener('input',e=>{const p=edProc();p.t0=parseFloat(e.target.value)||0;edChanged()});
 $('edTitle').addEventListener('input',e=>{edProc().title=e.target.value;edChanged()});
-$('steps').addEventListener('mouseover',e=>{const tr=e.target.closest('tr');if(tr)setHi(+tr.dataset.i)});
+$('steps').addEventListener('mouseover',e=>{const tr=e.target.closest('tr');if(tr&&tr.dataset.i!==undefined)setHi(+tr.dataset.i)});
 $('steps').addEventListener('mouseleave',()=>setHi(null));
-$('steps').addEventListener('focusin',e=>{const tr=e.target.closest('tr');if(tr)setHi(+tr.dataset.i)});
+$('steps').addEventListener('focusin',e=>{const tr=e.target.closest('tr');if(tr&&tr.dataset.i!==undefined)setHi(+tr.dataset.i)});
 $('steps').addEventListener('focusout',()=>setHi(null));
 $('steps').addEventListener('input',e=>{const tr=e.target.closest('tr'),k=e.target.dataset.k;if(!tr||!k)return;const p=edProc(),s=p.steps[+tr.dataset.i];
   if(k==='up'||k==='dn'||k==='t2'){const v=e.target.value.trim();s[k]=v===''?'':(isNaN(+v)?v:+v)}else s[k]=e.target.value;edChanged()});
 $('steps').addEventListener('change',e=>{if(e.target.dataset.k==='t'){const tr=e.target.closest('tr'),p=edProc(),s=p.steps[+tr.dataset.i];s.t=e.target.value;
   if(s.t==='M'&&s.up===undefined){s.up=1.5;s.dn=1.5;s.t2=''}if(s.t==='U'&&s.up===undefined){s.up=1.0;s.t2=''}save();markDirty();renderEditor();renderSheets()}});
-$('steps').addEventListener('click',e=>{const tr=e.target.closest('tr');if(!tr)return;const i=+tr.dataset.i,p=edProc();
-  if(e.target.dataset.rm){p.steps.splice(i,1)}else if(e.target.dataset.mv){const j=i+ +e.target.dataset.mv;if(j<0||j>=p.steps.length)return;[p.steps[i],p.steps[j]]=[p.steps[j],p.steps[i]]}else return;
+$('steps').addEventListener('click',e=>{const ib=e.target.closest('[data-ins]');if(ib){const pp=edProc(),at=+ib.dataset.ins;pp.steps.splice(at,0,{t:'G',m:'5',top:'',bot:'',c:newColor(pp)});MV=at;HI=at;save();markDirty();renderEditor();renderSheets();return}
+  const tr=e.target.closest('tr');if(!tr||tr.dataset.i===undefined)return;const i=+tr.dataset.i,p=edProc();
+  if(e.target.dataset.rm){p.steps.splice(i,1)}else if(e.target.dataset.mv){const j=i+ +e.target.dataset.mv;if(j<0||j>=p.steps.length)return;[p.steps[i],p.steps[j]]=[p.steps[j],p.steps[i]];MV=j;HI=j}else return;
   save();markDirty();renderEditor();renderSheets()});
-$('btnStep').onclick=()=>{edProc().steps.push({t:'G',m:'5',top:'',bot:''});save();markDirty();renderEditor();renderSheets()};
+$('btnStep').onclick=()=>{const pp=edProc();pp.steps.push({t:'G',m:'5',top:'',bot:'',c:newColor(pp)});MV=pp.steps.length-1;HI=MV;save();markDirty();renderEditor();renderSheets()};
 $('btnReset').onclick=()=>{const old=EID;gsDelete(old);if(orig(EID)){delete S.custom[ck(EID)]}else{delete S.custom[ck(EID)];EID=null}save();markDirty();renderEditor();renderSheets();fillDef()};
 $('btnDup').onclick=()=>{const src=edProc();let n=14;while(allIds().includes(String(n)))n++;const id=String(n);S.custom[ck(id)]=Object.assign(clone(src),{id,u:S.unit,title:src.title.replace(/ - \S+$/,'')+' - '+id+' (new)',verify:false});EID=id;cur().proc=id;S.rows=[cur()];save();markDirty();renderEditor();renderRows();renderSheets();gsPush(id)};
 function fillDef(){showName()}
