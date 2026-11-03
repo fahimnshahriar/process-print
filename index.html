@@ -434,12 +434,12 @@ $('fPno').addEventListener('input',e=>{const id=findProc(e.target.value);const b
   showName(bad);if(id){cur().proc=id;EID=id;refresh(false);renderEditor();showName()}});
 $('fPno').addEventListener('blur',e=>{const id=findProc(e.target.value);e.target.value=id||cur().proc;e.target.style.borderColor='';showName()});
 // keyboard: Enter / Down = next field, Up = previous field, Ctrl+Enter = print
-const NAV=['fMc','fPno','fGsm','fDia','fUnit','fKg','fLr'];
+const NAV=['fMc','fPno','fGsm','fDia','fUnit','fKg','fLr','abs','cyc'];
 NAV.forEach((id,i)=>$(id).addEventListener('keydown',e=>{
   if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();window.print();return}
   const t=e.target,isSel=t.tagName==='SELECT';
-  const atStart=isSel||(t.selectionStart===0&&t.selectionEnd===0)||(t.selectionStart===0&&t.selectionEnd===t.value.length);
-  const atEnd=isSel||(t.selectionStart===t.value.length)||(t.selectionStart===0&&t.selectionEnd===t.value.length);
+  const noSel=t.selectionStart==null;const atStart=isSel||noSel||(t.selectionStart===0&&t.selectionEnd===0)||(t.selectionStart===0&&t.selectionEnd===t.value.length);
+  const atEnd=isSel||noSel||(t.selectionStart===t.value.length)||(t.selectionStart===0&&t.selectionEnd===t.value.length);
   let to=null;
   if(e.key==='Enter')to=i+1;
   else if(e.key==='ArrowDown'&&!isSel)to=i+1;
@@ -457,7 +457,7 @@ $('fMc').addEventListener('input',e=>{
   t.mc=o.mc;t.gsm=o.gsm;t.dia=o.dia;t.unit=o.unit;t.kg=o.kg;t.lr=o.lr;t.proc=o.proc;o.mc='';
   EID=null;S.rows=[cur()];renderRows();renderEditor();renderSheets();save()});
 NAV.forEach(id=>{const el=$(id);if(el.tagName==='INPUT')el.addEventListener('click',()=>{try{el.select()}catch(e){}})});
-$('btnPrint2').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();$('fLr').focus()}});
+$('btnPrint2').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();$('cyc').focus()}});
 $('btnPrint').onclick=$('btnPrint2').onclick=()=>window.print();
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{S.unit=+b.dataset.u;S.rows=[cur()];EID=null;renderRows();renderEditor();renderSheets();save()}));
 function renderSheets(){
