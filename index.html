@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dyeing Process Sheet Printer</title>
+<style>
+/* Layout: control panel on top (machines table, graph editor), A4 sheets below. Print shows only the sheets. */
+:root{
+  --bg:#f3f4f2; --panel:#ffffff; --fg:#1d2420; --muted:#5d6a62; --line:#d5dad6;
+  --accent:#0f6b5c; --accent-fg:#ffffff; --warn:#b4540a; --field:#ffffff; --sel:#e4f1ee;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:ui-monospace,Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --panel:#1d2521; --fg:#e6ece8; --muted:#9aa89f; --line:#34413a;
+  --accent:#4cc2ac; --accent-fg:#06211b; --warn:#f0a05a; --field:#16201c; --sel:#22372f; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#141a17; --panel:#1d2521; --fg:#e6ece8; --muted:#9aa89f; --line:#34413a;
+  --accent:#4cc2ac; --accent-fg:#06211b; --warn:#f0a05a; --field:#16201c; --sel:#22372f; color-scheme:dark;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 var(--font);padding-inline:16px;padding-block:16px 40px}
+h1{font-size:20px;margin:0 0 2px}
+h2{font-size:15px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sub{color:var(--muted);margin:0 0 14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:14px;max-width:1200px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);min-width:0}
+input,select,button{font:inherit;color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{cursor:pointer}
+button.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+button.ghost{background:transparent}
+.tw{overflow-x:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:9px 18px;font-weight:600;background:var(--field)}
+.seg button[aria-selected=true]{background:var(--accent);color:var(--accent-fg)}
+.gs{margin-bottom:12px;border:1px solid var(--line);border-radius:4px;padding:8px 12px}
+.gs summary{cursor:pointer;font-weight:600}
+.pname{font-size:15px;font-weight:600;flex:1 1 280px;min-width:0;align-self:end;padding-bottom:6px;line-height:1.3}
+.pname small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.pname.bad{color:var(--warn)}
+.res{display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:14px;padding:10px 12px;background:var(--sel);border-radius:4px}
+.res b{font-weight:700}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:4px 6px;white-space:nowrap}
+td{padding:4px 6px;border-top:1px solid var(--line);vertical-align:middle}
+td input,td select{width:100%}
+td.calc{font-variant-numeric:tabular-nums;white-space:nowrap;font-family:var(--mono);font-size:13px}
+td.calc.bad{color:var(--warn)}
+.n{width:78px}.num{width:84px}.sm{width:64px}
+.hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+.warn{color:var(--warn)}
+.ed{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}
+@media (max-width:980px){.ed{grid-template-columns:1fr}}
+.prev{border:1px solid var(--line);border-radius:4px;background:#fff;padding:6px;overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:8px}
+.steps td{padding:3px 4px}
+.steps input{padding:4px 5px}
+.steps select{padding:4px 3px}
+.stepbtn{padding:3px 7px}
+.stepbtn.del{color:var(--warn)}
+.steps tr.hl td{background:var(--sel)}
+.sheetwrap{max-width:1200px}
+.sheet{display:flex;flex-direction:column;justify-content:space-between;background:#fff;color:#222;width:210mm;height:297mm;margin:0 auto 14px;padding:12mm 14mm 18mm;box-shadow:0 1px 6px rgba(0,0,0,.25);position:relative;font-family:Arial,Helvetica,sans-serif;page-break-after:always;break-after:page}
+.sheet>*{flex:none}.sheet>.graphbox{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}.sheet:last-child{page-break-after:auto;break-after:auto}
+/* ---- printed sheet layout ---- */
+.sheet{gap:1.8mm;justify-content:flex-start;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sheet>.graphbox.g2{flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;margin:0;border:1px solid #555;border-radius:2mm;overflow:hidden}
+.gb-h{display:flex;justify-content:space-between;background:#f4f4f4;border-bottom:1px solid #555;padding:1mm 3mm;font-size:8.5pt;font-weight:700;letter-spacing:.08em}
+.gb-s{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center;padding:1.5mm 2mm}
+.gb-s svg{width:100%;height:100%;display:block}
+.sh-top{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border:1px solid #555;border-radius:2mm;overflow:hidden}
+.cell{padding:1mm 2.6mm;border-right:1px solid #555;min-height:9.5mm}
+.cell:last-child{border-right:0}
+.cell small,.card small{display:block;font-size:7pt;font-weight:700;letter-spacing:.1em;color:#555;text-transform:uppercase}
+.cell b{font-size:12pt}
+.sh-title{text-align:center;font-size:15pt;font-weight:800;line-height:1.2;padding:1.8mm 4mm;background:#fff;color:#000;border:1.2px solid #444;border-radius:2mm;margin:0}
+.sh-sub{text-align:center;font-size:9pt;line-height:1.25;font-style:italic;margin:-0.8mm 0 0;color:#222}
+.mcbox{display:grid;grid-template-columns:62mm 1fr;border:1.2px solid #555;border-radius:2mm;overflow:hidden}
+.mcbox .mc{display:flex;flex-direction:column;justify-content:center;padding:1.2mm 4mm;border-right:1.2px solid #555;background:#f8f8f8}
+.mcbox .mc small{font-size:7.5pt;font-weight:700;letter-spacing:.12em;color:#555}
+.mcbox .mc strong{font-size:24pt;font-weight:800;line-height:1.05}
+.mcbox .mc em{font-style:normal;font-size:8.5pt;font-weight:700;letter-spacing:.1em}
+.mcgrid{display:grid;grid-template-columns:1fr 1fr}
+.mcgrid .cell{border-bottom:1px solid #555;display:flex;flex-direction:column;justify-content:center}
+.mcgrid .cell:nth-child(2n){border-right:0}
+.mcgrid .cell:nth-last-child(-n+2){border-bottom:0}
+.mcgrid .cell{min-height:8.5mm}.mcgrid .cell b{font-size:13pt}
+.calc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm}
+.card{border:1px solid #555;border-radius:2mm;padding:1mm 3mm}
+.card b{display:block;font-size:13pt;font-weight:800;min-height:5.5mm}
+.param{display:grid;grid-template-columns:50mm 1fr 1fr;font-size:10.5pt;border-top:1px solid #555;border-left:1px solid #555}
+.param div{border-right:1px solid #555;border-bottom:1px solid #555;padding:.6mm 3mm;min-height:6.2mm;display:flex;align-items:center}
+.param .h{font-weight:800;background:#f4f4f4;font-size:8.5pt;white-space:nowrap;letter-spacing:.06em}
+.param .k{font-weight:700;background:#fafafa}
+.water{display:flex;gap:2.5mm}
+.water .wb{flex:1;border:1px solid #555;border-radius:2mm;padding:1.2mm 3mm;font-weight:800;font-size:12.5pt;display:flex;justify-content:space-between;align-items:baseline;gap:3mm}
+.water .wb small{font-size:8pt;letter-spacing:.08em;color:#444}
+.water .wb i{flex:1;border-bottom:1.1.2px solid #555;min-width:14mm;height:5mm}
+.sign{display:flex;align-items:flex-end;gap:3mm;font-size:9.5pt;font-weight:700}
+.sign i{flex:1;border-bottom:1.1.2px solid #555;height:5mm}
+.note{font-size:9.5pt;font-weight:700;text-align:center;margin:0;padding:1mm 3mm;border:1px dashed #666;border-radius:2mm;background:#fafafa}
+.chkbox{border:1px solid #555;border-radius:2mm;overflow:hidden}
+.chk-h{background:#f4f4f4;border-bottom:1px solid #555;padding:1mm 3mm;font-size:8.5pt;font-weight:800;letter-spacing:.08em}
+.checks{columns:2;column-gap:8mm;font-size:9.5pt;font-weight:700;padding:1.6mm 3.5mm 0}
+.checks div{display:flex;gap:2mm;margin-bottom:1.5mm;break-inside:avoid;align-items:flex-end}
+.checks .bx{width:3.4mm;height:3.4mm;border:1px solid #555;border-radius:.8mm;flex:none;align-self:center}
+.checks .ln{flex:1;border-bottom:1.1.2px solid #555;height:4.4mm}
+.ftr{position:absolute;left:14mm;right:14mm;bottom:6mm;font-size:7.5pt;color:#444;display:flex;justify-content:space-between;border-top:1px solid #999;padding-top:1.2mm}
+/* Google status chip, bottom right of the screen (never printed) */
+.gchip{position:fixed;right:10px;bottom:10px;z-index:50;max-width:62vw;font-size:12px;padding:5px 11px;border-radius:999px;background:var(--panel);color:var(--fg);border:1px solid var(--line);box-shadow:0 1px 5px rgba(0,0,0,.2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gchip.bad{color:var(--warn);border-color:var(--warn)}
+.fin p{margin:0 0 3.5mm;font-size:12.5pt}
+.fin h3{font-size:14pt;text-align:center;margin:0 0 5mm}
+.empty{max-width:1200px;text-align:center;color:var(--muted);padding:30px}
+@page{size:A4 portrait;margin:0}
+@media print{
+  body{background:#fff;padding:0}
+  .noprint{display:none!important}
+  .sheetwrap{max-width:none}
+  .sheet{box-shadow:none;margin:0;width:210mm;height:296.5mm;overflow:hidden}
+}
+</style>
+</head>
+<body>
+<div class="noprint">
+<h1>Dyeing Process Sheet Printer</h1>
+<p class="sub">Type the MC number: MC 1-23 opens Unit 1 and MC 101-106 opens Unit 2 automatically, and the process number is searched in that unit's own process folder. Then enter the process number, GSM and dia, then press Print. The sheet below is exactly what prints.</p>
+
+<div class="panel">
+  <h2>1. Print one machine</h2>
+  <div class="seg" role="tablist" style="margin-bottom:12px">
+    <button type="button" data-u="1" role="tab">Unit 1 &nbsp;(MC 1 - 23)</button>
+    <button type="button" data-u="2" role="tab">Unit 2 &nbsp;(MC 101 - 106)</button>
+  </div>
+  <div class="row" style="margin-bottom:10px">
+    <label class="f">MC no<input id="fMc" class="n" list="mcList" inputmode="numeric" autocomplete="off"></label>
+    <datalist id="mcList"></datalist>
+    <label class="f">Process no<input id="fPno" class="n" list="pnoList" autocomplete="off" placeholder="e.g. 19"></label>
+    <datalist id="pnoList"></datalist>
+    <div class="pname" id="pname"></div>
+    <label class="f">GSM<input id="fGsm" class="num" inputmode="decimal"></label>
+    <label class="f">Dia<input id="fDia" class="num" inputmode="decimal"></label>
+    <label class="f">Dia unit<select id="fUnit"><option value="in">inch</option><option value="cm">cm</option></select></label>
+    <label class="f">Load kg (optional)<input id="fKg" class="num" inputmode="decimal"></label>
+    <label class="f">L:R (optional)<input id="fLr" class="sm" inputmode="decimal"></label>
+  </div>
+  <div class="res" id="res"></div>
+  <div class="row" style="margin-top:12px"><button class="pri" id="btnPrint2" type="button" style="font-size:15px;padding:9px 22px">Print this sheet</button></div>
+  <div class="row" style="margin:12px 0 4px">
+    <label class="f">Date<input id="fDate" type="date" style="width:150px"></label>
+    <label class="f">Cycle time (min)<input id="cyc" class="num" type="number" step="0.1" min="0.1" value="2"></label>
+    <label class="f">Absorbency (L/kg)<input id="abs" class="num" type="number" step="0.1" min="0" value="2"></label>
+    <label class="f">Tank fills deducted<input id="fills" class="num" type="number" step="1" min="0" value="4"></label>
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optLev" checked> Show levelling water</label>
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optChecks" checked> Print check list</label>
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optFin"> Add finishing notes page</label>
+  </div>
+  <p class="hint">L/W = GSM x dia(inch) x 0.0254. R/L = load kg x 1000 / (L/W x nozzles). Reel speed = R/L / cycle time. If Load kg is empty the machine capacity is used; if L:R is empty the machine's minimum water is used. Levelling water (tick "Show levelling water" to print it) = total liquor - (tank fills x tank size) - (load x absorbency), same as RECIPE_CALCULATOR.xlsx. Unit 1 and Unit 2 each remember their own last entry. Keys: Enter, Down or Right arrow = next field; Up or Left arrow = previous field; Ctrl+Enter = print.</p>
+</div>
+
+<div class="panel">
+  <h2>2. Process graph</h2>
+  <details class="gs" id="gsBox">
+    <summary>Google save <span id="gsState" class="hint" style="margin:0 0 0 8px"></span></summary>
+    <div class="row" style="margin:10px 0">
+      <label class="f" style="flex:1;min-width:260px">Google Script URL (Web app URL)<input id="gsUrl" placeholder="https://script.google.com/macros/s/.../exec"></label>
+      <label class="f">Password (if set)<input id="gsKey" type="password" class="num" style="width:130px" autocomplete="off"></label>
+      <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="gsAuto" checked> Save automatically</label>
+      <button id="gsSave" type="button" class="pri">Save this process</button>
+      <button id="gsLoad" type="button">Load from Google</button>
+    </div>
+    <p class="hint" id="gsMsg" style="margin:0 0 6px"></p>
+  </details>
+  <div class="row" style="margin-bottom:10px">
+    <label class="f">Process<select id="edProc" style="min-width:260px"></select></label>
+    <label class="f">Start temp °C<input id="edT0" class="num" type="number"></label>
+    <label class="f" style="flex:1;min-width:200px">Graph title<input id="edTitle"></label>
+    <button id="btnDup" type="button">Copy as new process</button>
+    <button class="ghost" id="btnReset" type="button">Reset to original</button>
+  </div>
+  <div class="ed">
+    <div class="tw"><table class="steps">
+      <thead><tr><th></th><th>Shape</th><th>Min</th><th>Label above</th><th>Label below</th><th title="Gradient: °C/min up, down, temp after. Ramp: °C/min and temp after.">Rate ↑</th><th>Rate ↓</th><th>°C after</th><th></th></tr></thead>
+      <tbody id="steps"></tbody>
+    </table>
+    <div class="row" style="margin-top:8px"><button id="btnStep" type="button">Add step</button></div></div>
+    <div>
+      <div class="prev" id="edPrev"></div>
+      <div class="legend">
+        <span><b>Rectangle</b> = linear dosing</span>
+        <span><b>Slope both sides</b> = migration</span>
+        <span><b>Triangle</b> = recirculation</span><span><b>Ramp up</b> = progressive</span>
+      </div>
+      <p class="hint" id="edWarn"></p>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="max-width:1200px;margin-bottom:14px">
+  <button class="pri" id="btnPrint" type="button" style="font-size:15px;padding:9px 18px">Print this sheet</button>
+  <span class="hint" id="cnt" style="margin:0"></span>
+</div>
+</div>
+
+<div class="sheetwrap" id="sheets"></div>
+<div class="gchip noprint" id="gchip" role="status">☁ Google script</div>
+
+<script>
+// ---------- machine table (from Sheet2 of RECIPE_CALCULATOR.xlsx): mc, capacity kg, min water L, nozzles, tank L
+const MACH=[[1,1500,5500,6,450],[2,1500,5500,6,450],[3,1200,4800,4,400],[4,1200,4800,4,400],[5,1000,4000,4,320],[6,1000,4000,4,320],[7,1000,4000,4,320],[8,750,3000,3,240],[9,750,3000,3,240],[10,750,3000,3,240],[11,500,2000,2,190],[12,300,1300,1,190],[13,250,1000,1,120],[14,250,1000,1,120],[15,400,1800,2,190],[16,180,900,1,120],[17,500,2000,2,190],[18,500,2000,2,190],[19,180,900,1,120],[20,100,600,1,80],[21,100,600,1,80],[22,1500,5500,6,450],[23,1000,4000,4,320],[101,1500,6000,6,700],[102,900,3600,3,400],[103,750,3000,3,400],[104,500,2000,2,350],[105,400,1600,2,300],[106,200,800,1,100]];
+const MC={};MACH.forEach(m=>MC[m[0]]={cap:m[1],minw:m[2],noz:m[3],tank:m[4]});
+
+// ---------- process library
+// step types: G plain line, R rectangle (linear dosing), T triangle (recirculation / progressive), M slope both sides (gradient), U ramp up
+const G=(m,top,bot)=>({t:'G',m:m||'',top:top||'',bot:bot||''});
+const R=(m,top,bot)=>({t:'R',m:m||'',top:top||'',bot:bot||''});
+const T=(m,top,bot)=>({t:'T',m:m||'',top:top||'',bot:bot||''});
+const M=(top,up,dn,t2)=>({t:'M',m:'',top,up,dn,t2,bot:''});
+const U=(top,up,t2)=>({t:'U',m:'',top,up,t2,bot:''});
+const SODA='SODA (70% PROGRESSIVE)';
+const CS='S',CV='V',CB='B';
+const CHECKS={
+ S:['ABSORBENCY CHECK','SCOURING GROUND CHECK','PEROXIDE KILLER CHECK','COLOUR DROP CHECK','SALT SHADE CHECK','COLOUR MIX','ENZYME PH CHECK','LEVELLING PH CHECK','SALT PH CHECK','DYEBATH PH CHECK','BD ACID PH CHECK'],
+ V:['ABSORBENCY CHECK','PEROXIDE KILLER CHECK','COLOUR DROP CHECK','SALT SHADE CHECK','COLOUR MIX','ENZYME PH CHECK','LEVELLING PH CHECK','SALT PH CHECK','DYEBATH PH CHECK','SOAPING PH CHECK'],
+ B:['ABSORBENCY CHECK','PEROXIDE KILLER CHECK','COLOUR MIX','ENZYME PH CHECK','LEVELLING PH CHECK','SALT PH CHECK','DYEBATH PH CHECK','SOAPING PH CHECK']};
+const P=(id,title,sub,t0,steps,chk,note,verify)=>({id,title,sub:sub||'',t0,steps,chk:chk||CS,note:note||'',verify:!!verify});
+const REC=(x)=>R(x||'REC-10','SALT','RECIRCULATION');
+// Dyeing process library, collected unit wise from Dyeing_Program_Calculator.html.
+// u = unit number. Unit 1: none in that file yet (add with 'Copy as new process'). Unit 2: 13 dyeing processes.
+const PU=(u,...a)=>Object.assign(P(...a),{u});
+const EMPTY=()=>({id:'',title:'NO PROCESS FOR THIS UNIT - 00',sub:'',t0:60,steps:[],chk:CS,note:'',verify:false});
+const LIB=[
+// ---- Unit 1 dyeing processes (from the Unit 1 saved-process screenshots)
+PU(1,'01','ALL 60 TEMP NAVY / RED / BURGANDY (DARK COLOR) - 01','',60,[G('5','LEVEL'),R('10','SALT','RECIRCULATION'),G('12'),R('20','COLOUR','LINEAR DOSSING'),G('15'),R('20','SODA ASH'),G('3'),T('25','70% PROGRESSIVE','2ND SODA (REST)')]),
+PU(1,'01A','ALL 65 TEMP MIXED ALKALI BLACK COLOR PROCESS - 01A','',65,[G('5','LEVEL'),R('10','SALT','LINER'),G('12'),R('20','COLOUR','LINEAR DOSSING'),G('15'),R('20','SODA ASH 1G/L','LINEAR DOSING'),G('3'),T('25','CAUSTIC + REST SODA','70% PROGRESSIVE PH CHECK')]),
+PU(1,'01C','ALL 65 TEMP BLACK - 01C','',65,[G('5','LEVEL'),R('10','SALT','RECIRCULATION'),G('12'),R('20','COLOUR','LINEAR DOSSING'),G('15'),R('20','SODA ASH'),G('3'),T('25','70% PROGRESSIVE','2ND SODA (REST)')]),
+PU(1,'02','AVG COLOR + CRITICAL - 02','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR DOSING'),G('15'),R('5','SALT','LINEAR DOSING'),G('3'),R('5','SALT DOSING','LINEAR DOSING'),G('15','RUN TIME / HOLD TIME AT 60°C'),R('20','SODA ASH 1G/L','LINEAR DOSING'),G('5'),T('25','REST SODA','70% PROGRESSIVE (PH CHECK)')]),
+PU(1,'03','AVG COLOR + CRITICAL (MIGRATION) - 03','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR DOSING'),G('15'),R('10','COLOR','LINEAR DOSING'),G('5','RUN TIME / HOLD TIME AT 60°C'),M('70°C X 15’',1.5,1.5,60),G('3'),R('20','SODA ASH 1G/L','LINEAR DOSING'),G('3'),T('30','REST SODA','70% PROGRESSIVE')]),
+PU(1,'04','LIGHT COLOR - 04','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR'),G('20'),R('10','SALT','LINEAR DOSSING'),G('20'),R('20','SODA ASH (1G/L)','LINEAR DOSSING'),G('5'),T('30','2ND SODA (REST)','70% PROGRESSIVE')]),
+PU(1,'05','OTHER LIGHT COLOR (PINK/YELLOW/LT GREEN TYPE) + CVC DPD COTTON PART - 05','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR'),G('20'),R('10','SALT','LINEAR DOSSING'),G('20'),T('45','SODA ASH','70% PROGRESSIVE')]),
+PU(1,'06','TURQUOISE UPTO 1.5% 90X20 - 06','',80,[G('5','LEVEL'),R('30','LINEAR','LINEAR DOSING'),G('20'),R('6','LINEAR','LINEAR DOSING'),G('5','RUN TIME / HOLD TIME AT 80°C'),R('6','SALT DOSING'),G('5','RUN TIME / HOLD TIME AT 80°C'),M('90°C X 20’',1.5,1.5,80),G('5'),R('20','SODA ASH 1G/L','SODA'),G('3'),T('30','70% PROGRESSIVE')]),
+PU(1,'06A','TURQUOISE UPTO BELOW 1.5% 80X20 - 06A','',80,[G('5','LEVEL'),R('30','COLOR DOSING','LINEAR DOSING'),G('20'),R('6','SALT DOSING-LINEAR','LINEAR DOSING'),G('5','RUN TIME / HOLD TIME AT 80°C'),R('6','SALT DOSING'),G('10','RUN TIME / HOLD TIME AT 80°C'),R('20','SODA ASH 1G/L','SODA'),G('3'),T('30','70% PROGRESSIVE')]),
+PU(1,'07','CVC COTTON PART DYEING (WITHOUT TURQUOISE) - 07','',60,[G('5','LEVEL'),R('10','SALT','RECIRCULATION'),G('10'),R('20','COLOUR','LINEAR DOSING'),G('15'),T('45','SODA ASH','70% PROGRESSIVE')]),
+PU(1,'08','VISCOSE / TENSIL / MODAL DARK COLOR (90/95%+5/10%LY) - 08','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR DOSING'),G('15'),R('5','SALT','LINEAR DOSING'),G('5','RUN TIME / HOLD TIME AT 60°C'),R('5','SALT','LINEAR DOSING'),G('3','RUN TIME / HOLD TIME AT 60°C'),M('70°C X 15’',1.5,1.5,60),G('3'),R('20','SODA ASH 1G/L','SODA'),G('3'),T('30','70% PROGRESSIVE')]),
+PU(1,'09','50/50 TENSIL / MODAL - 09','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR DOSING'),G('20'),R('5','SALT','LINEAR DOSING'),G('3','RUN TIME / HOLD TIME AT 60°C'),R('5','SALT DOSING','LINEAR'),G('5','RUN TIME / HOLD TIME AT 60°C'),R('20','SODA ASH 1G/L','LINEAR DOSING'),G('5'),T('25','70% PROGRESSIVE')]),
+PU(1,'09A','50/50 TENSIL / MODAL SQ MBLACK - 09A','',60,[G('5','LEVEL'),R('20','COLOR','LINEAR DOSING'),G('15'),R('10','SALT','LINEAR DOSSING'),G('20','RUN TIME / HOLD TIME AT 60°C'),R('20','SODA ASH 1G/L','SODA'),G('5'),T('30','70% PROGRESSIVE')]),
+
+PU(2,'01','ALL 60 TEMP DYEING PROCESS - 01','FOR ALL LIGHT + MEDIUM + SODA UPTO 8 GPL (BONE+SAND). FOR CVC S/J + FLEECE/TERRY 2 PART + 1 PART CRITICAL COLOUR (LIGHT)',60,[G('3','LEVEL'),R('20','COLOUR','LINEAR DOSSING'),G('12'),R('10','SALT','LINEAR DOSSING'),G('15'),T('45',SODA,'PROGRESSIVE')]),
+PU(2,'02','ALL 60 TEMP DYEING PROCESS - 02','FOR ALL CRITICAL COLOUR (2 TIME SODA)',60,[G('3'),R('20','COLOUR','LINIAR'),G('15'),R('6+3+6','SALT','DOSSING'),G('15'),T('20','SODA 70% PROGRESSIVE','1g/l LINEAR'),G('3'),T('25','','REST')]),
+PU(2,'03','ALL 65 TEMP DYEING PROCESS - 03','ALL BLACK COLOR PROCESS',65,[G('3','LEVEL'),R('REC 8','SALT','REC'),G('10'),R('20','COLOR','LINEAR DOSSING'),G('15'),T('40','Soda 70% Progressive','PROGRESSIVE')]),
+PU(2,'04','ALL LIGHT TURQUOISE 80C-80C PROCESS - 04','',80,[G('5'),R('20','COLOUR','LINIAR'),G('20'),R('10+5+10','SALT (FRESH WATER)','DOSSING'),G('20'),T('20','SODA 70% PROGRESSIVE','1G/L'),G('5'),T('25','','REST')]),
+PU(2,'05','VISCOSE / TENCEL / BAMBOO / SPECIAL FABRIC PROCESS - 05','SALT DOSSING (2 TIME)',60,[G('10','LEVEL'),R('30','COLOR','LINEAR'),G('20'),R('10','SALT = ½','LINEAR'),G('5'),R('10','SALT = ½','LINEAR'),G('10'),M('80 X 20’',1.5,1.5,60),G('10'),T('20','1ST SODA (1/10)','PROGRESSIVE'),G('5'),T('30','2ND SODA','')]),
+PU(2,'06','ALL 60 (OCEAN / AM-RL / CORAFIX) TEMP DYEING PROCESS - 06','',60,[G('5'),R('20','COLOUR','LINIAR'),G('15'),R('5+5+5','SALT','DOSSING'),G('15'),T('20','SODA 70% PROGRESSIVE','1G/L'),G('5'),T('25','','REST')]),
+PU(2,'07','MIGRATION PROCESS - 07','DEEP TURQUOISE 1.0 TO ABOVE & OCEAN/BLUE/NAVY. SALT 3-TIME DOSSING',80,[G('5','LEVEL'),R('25','COLOUR','LINEAR DOSSING'),G('15'),R('10+5+10+5+10','SALT (FRESH WATER) 3 TIME','LINEAR DOSSING'),G('5'),M('90 X 20’',1.5,1.5,80),G('5'),T('20','70% PROGRESSIVE','1G/L'),G('10'),T('30','','REST 80°C')]),
+PU(2,'08','ALL 60-90-60 TEMP DYEING PROCESS - 08','DEEP TURQUOISE MIX OCEAN/NAVY COM, MIGRATION. SALT 2-TIME DOSSING',60,[G('5','LEVEL'),R('25','COLOUR','LINEAR DOSSING'),G('15'),R('10+5+10','SALT (FRESH WATER) 2 TIME','LINEAR DOSSING'),G('5'),M('90 X 15’',1.5,1.5,60),G('5'),T('20','70% PROGRESSIVE','1G/L'),G('5'),T('25','','REST 60°C')]),
+PU(2,'09','COMBINATION MIGRATION PROCESS - 09','YELLOW DS + RED DS + NAVY BLUE KBF (60C-70-60C)',60,[G('3','LEVEL','REC'),R('REC-5','SALT','REC'),G('10'),R('20','COLOUR','LINIAR DOSSING'),G('3'),M('Migration 70°C X 20’',3,3,60),G('3'),R('20','1ST SODA','LINIAR 1g/l'),G('3'),T('25','2ND SODA','REST 60°C')]),
+PU(2,'10','NEW DYEING PROCESS - 10','FOR HELIOTROPE COLOUR / PURPLE TYPE (LIGHT/DEEP)',40,[G('5'),R('20','COLOUR','LINIAR'),G('15'),R('10+3+10','SALT','DOSSING'),G('10'),U('1.0 GRADE',1.0,60),G('10'),T('25','SODA 70% PROGRESSIVE','1/20'),G('5'),T('30','','19/20')]),
+PU(2,'11','ALL 65 TEMP MIXED ALKALI BLACK COLOR PROCESS - 11','',65,[G('3','LEVEL'),R('REC-8','SALT','RECIRCULATION'),G('10'),R('20','COLOUR','LINEAR DOSSING'),G('15'),R('20','SODA ASH','SODA'),G('3'),T('25','70% PROGRESSIVE','CAUSTIC PH CHECK')]),
+PU(2,'12','ALL 60 TEMP DYEING PROCESS - 12','FOR (60/40) CVC S/J + LY + FLEECE/TERRY 2 PART + 1 PART CRITICAL COLOUR (DARK) + RED + CHARCOAL GREEN TYPE + ABOVE SHADE 3%',60,[G('3','LEVEL'),R('REC-08','SALT','RECIRCULATION'),G('10'),R('20','COLOR','LINEAR DOSSING'),G('15'),T('45',SODA,'PROGRESSIVE')]),
+PU(2,'13','FOR NAVY NEW PROCESS - 13','',60,[G('3','LEVELLING'),R('REC-8','SALT','RECIRCULATION'),G('10'),R('20','COLOUR','LINIAR'),G('15'),R('20','SODA','LINIAR 2G/L'),G('5'),T('25','SODA 70% PROGRESSIVE','REST 60°C')])
+];
+const FIN=['Before giving shade roll parameter please follow batch card information & check shade.','1. Any type of Ly fabric: (light to medium) (temp = 140°C-150°C).','2. Any type of Ly fabric (dark) (temp = 151°C-160°C).','3. Any type of Ly Vis/Modal fabric: (Dark) (temp = 160°C-175°C).','4. Any type of Ly Vis/Modal fabric: (Light) (temp = 140°C-150°C).','5. Any type of Ctn fabric: (light to medium) (temp = 130°C-140°C).','6. Any type of Ctn fabric: (dark) (temp = 140°C-160°C).','7. Any type of CVC fabric: (temp = 100°C-110°C).','Back roller padder pressure: try to keep 4/3 kg.','Cationic softener makes yellow.','If light colour red short, use Non-ionic softener: Persoft UNN.','1. Inhouse any white = Non-ionic softener + penmagro.','2. Cotton heritage any colour = Non-ionic softener + Hydrophilic softener + penmagro.','3. JM any colour fleece: 60/40 CVC / 80/20 CVC / PC = only water.','4. Marb Tex - S. Off White - fleece (Non-ionic softener + BHT) PH = 4.0.','5. AS COLOR Tube = water dry + MM + ECO.'];
+
+// ---------- state
+const $=id=>document.getElementById(id);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const SK='procSheetPrinter.v3';
+const blank=mc=>({mc:mc,proc:'01',gsm:'',dia:'',unit:'in',kg:'',lr:''});
+let S={unit:1,f:{1:{mc:'20',proc:'',gsm:'250',dia:'65',unit:'in',kg:'68',lr:''},2:blank('')},rows:[],cyc:2,abs:2,fills:4,chk:true,fin:false,lev:true,custom:{}};
+try{const s=JSON.parse(localStorage.getItem(SK)||'null');if(s&&s.f)S=Object.assign(S,s)}catch(e){}
+const save=()=>{try{localStorage.setItem(SK,JSON.stringify(S))}catch(e){}};
+const ck=id=>S.unit===1?'U1-'+id:id; // custom-edit key, unique per unit
+const orig=id=>LIB.find(p=>p.id===id&&p.u===S.unit);
+const proc=id=>S.custom[ck(id)]||orig(id)||EMPTY();
+const allIds=()=>{const ids=LIB.filter(p=>p.u===S.unit).map(p=>p.id);Object.keys(S.custom).forEach(k=>{const c=S.custom[k];if(c&&(c.u||2)===S.unit&&!ids.includes(c.id))ids.push(c.id)});return ids};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---------- calc
+function calc(r){
+  const mc=MC[parseInt(r.mc,10)];const gsm=parseFloat(r.gsm),d=parseFloat(r.dia);
+  const o={ok:false};
+  if(!mc||!(gsm>0)||!(d>0))return o;
+  const inch=r.unit==='cm'?d/2.54:d;
+  const kg=parseFloat(r.kg)>0?parseFloat(r.kg):mc.cap;
+  const lw=gsm*inch*0.0254;
+  const rl=kg*1000/(lw*mc.noz);
+  const ratio=parseFloat(r.lr)>0?parseFloat(r.lr):mc.minw/kg;
+  const liquor=kg*ratio;
+  const lev=liquor-S.fills*mc.tank-kg*S.abs;
+  return {ok:true,inch,kg,lw,rl,reel:rl/S.cyc,ratio,liquor,lev,noz:mc.noz,cap:mc.cap,over:kg>mc.cap};
+}
+const f=(x,n)=>Number.isFinite(x)?x.toFixed(n):'';
+
+// ---------- graph renderer (SVG string)
+function lines(s){s=String(s||'').trim();if(!s)return[];const w=s.split(/\s+/),L=[];let c='';
+  w.forEach(t=>{if(c&&(c+' '+t).length>12){L.push(c);c=t}else c=c?c+' '+t:t});if(c)L.push(c);return L}
+const rt=v=>typeof v==='number'?v.toFixed(1):String(v);
+function graphSVG(p,hi){
+  const steps=p.steps,BASE=186,H=250,AX=6,X0=96,INK='#444',FILL='#f6f6f6',GUIDE='#bbb';
+  const ext=[],levels=[{y:BASE,t:p.t0}];let x=X0,levelTemp=p.t0,yb=BASE,out='',path=`M${X0} ${BASE}`,ticks=[[X0,BASE]];
+  const tx=(t,x,y,o={})=>`<text x="${x}" y="${y}" font-size="${o.fs||11}" text-anchor="${o.a||'middle'}" font-weight="${o.w||400}" fill="${o.c||INK}">${esc(t)}</text>`;
+  const ml=(t,xc,y0,fs,up,o={})=>{const L=lines(t);return L.map((q,i)=>tx(q,xc,up?y0-(L.length-1-i)*(fs+2):y0+i*(fs+2),Object.assign({fs},o))).join('')};
+  const wOf=st=>{const a=lines(st.top),b=lines(st.bot);const mx=Math.max(0,...a.map(t=>t.length),...b.map(t=>t.length));
+    const base={G:30,R:56,T:68,M:150,U:70}[st.t]||36;return Math.max(base,Math.min(mx*6.4+8,132))};
+  const shape=(d)=>`<path d="${d}" fill="${FILL}" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>`;
+  steps.forEach(st=>{
+    const w=wOf(st),xc=x+w/2;ext.push([x,w]);
+    const below=(y)=>{let o='';if(st.m)o+=tx(st.m+'’',xc,y+17,{fs:12,w:700});if(st.bot)o+=ml(st.bot,xc,y+31,10.5,false,{c:'#333'});return o};
+    if(st.t==='G'){
+      path+=` L${x+w} ${yb}`;
+      if(st.top)out+=ml(st.top,xc,yb-9,11.5,true,{w:600});
+      out+=below(yb);
+    }else if(st.t==='R'){
+      const h=44;path+=` L${x} ${yb} L${x+w} ${yb}`;
+      out+=shape(`M${x} ${yb} V${yb-h} H${x+w} V${yb} Z`);
+      if(st.top)out+=ml(st.top,xc,yb-h-7,11.5,true,{w:600});
+      out+=below(yb);
+    }else if(st.t==='T'){
+      const h=70;path+=` L${x+w} ${yb}`;
+      out+=shape(`M${x} ${yb} L${x+w} ${yb-h} V${yb} Z`);
+      if(st.top)out+=ml(st.top,xc,yb-h-7,11.5,true,{w:600});
+      out+=below(yb);
+    }else if(st.t==='M'){
+      const top=yb-112,sl=Math.min(44,w/3);
+      path+=` L${x} ${yb}`;
+      out+=shape(`M${x} ${yb} L${x+sl} ${top} H${x+w-sl} L${x+w} ${yb} Z`);
+      if(st.top)out+=ml(st.top,xc,top-8,11.5,true,{w:700});
+      const ru=(st.up===''||st.up==null)?'':rt(st.up)+'°C/min',rd=(st.dn===''||st.dn==null)?'':rt(st.dn)+'°C/min';
+      if(ru)out+=tx(ru,x+sl/2-4,yb-52,{fs:10.5,a:'end',c:'#333'});
+      if(rd)out+=tx(rd,x+w-sl/2+4,yb-52,{fs:10.5,a:'start',c:'#333'});
+      const nt=(st.t2===''||st.t2==null)?levelTemp:st.t2;path+=` M${x+w} ${yb}`;
+      if(String(nt)!==String(levelTemp))out+=tx(nt+'°C',x+w+4,yb-6,{fs:11,a:'start',w:700,c:'#333'});
+      levelTemp=nt;
+    }else if(st.t==='U'){
+      const rise=64;path+=` L${x} ${yb} L${x+w} ${yb-rise}`;
+      out+=`<line x1="${x}" y1="${yb}" x2="${x+w}" y2="${yb-rise}" stroke="${INK}" stroke-width="1.3"/>`;
+      if(st.top)out+=ml(st.top,x+w*0.5-6,yb-rise*0.5+16,11,false,{a:'end',w:600});
+      yb-=rise;const nt=(st.t2===''||st.t2==null)?levelTemp:st.t2;levelTemp=nt;levels.push({y:yb,t:nt});
+    }
+    x+=w;ticks.push([x,yb]);
+  });
+  const END=x+18, total=x+28;
+  path+=` L${END} ${yb}`;
+  // dashed temperature guides + axis labels
+  let g='';levels.forEach(l=>{g+=`<line x1="${AX+34}" y1="${l.y}" x2="${END}" y2="${l.y}" stroke="${GUIDE}" stroke-width="0.8" stroke-dasharray="4 3"/>`+tx(l.t+'°C',AX,l.y+4,{fs:12,a:'start',w:700})});
+  // time ticks under the first level
+  let tk='';ticks.forEach(t=>{tk+=`<line x1="${t[0]}" y1="${t[1]}" x2="${t[0]}" y2="${t[1]+7}" stroke="${INK}" stroke-width="1"/>`});
+  // pH check tag
+  const ph=`<g><rect x="${AX}" y="${BASE-136}" width="72" height="26" rx="2" fill="#fff" stroke="${INK}" stroke-width="1.3"/>`+tx('pH CHECK',AX+36,BASE-119,{fs:11,w:700})+`<line x1="${AX+36}" y1="${BASE-110}" x2="${AX+36}" y2="${BASE-70}" stroke="${INK}" stroke-width="1.3"/><path d="M${AX+30} ${BASE-76} L${AX+36} ${BASE-66} L${AX+42} ${BASE-76} Z" fill="#777"/></g>`;
+  let hl='';if(hi!=null&&ext[hi])hl=`<rect x="${ext[hi][0]-2}" y="6" width="${ext[hi][1]+4}" height="${H-12}" rx="4" fill="#ffd84d" opacity="0.55"/>`;
+  const base=`<path d="${path}" fill="none" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${H}" preserveAspectRatio="xMinYMid meet" style="font-family:Arial,Helvetica,sans-serif">${hl}${g}${base}${tk}${out}${ph}</svg>`;
+}
+
+// ---------- sheets
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function fmtDate(v){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(v||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''}
+function sheetHTML(r,c){
+  const p=proc(r.proc);const mc=parseInt(r.mc,10);
+  const chk=S.chk?`<div class="chkbox"><div class="chk-h">QUALITY CHECKS</div><div class="checks">${CHECKS[p.chk].map(t=>`<div><span class="bx"></span><span>${esc(t)}</span><span class="ln"></span></div>`).join('')}</div></div>`:'';
+  const lw=c.ok?`${f(c.lw,2)} g/m`:'', rl=c.ok?`${f(c.rl,1)} m`:'', rs=c.ok?`${f(c.reel,0)} m/min`:'';
+  const lev=c.ok&&c.lev>0?`${Math.round(c.lev)} L`:'';
+  const dia=r.gsm?`${esc(r.dia)} ${r.unit==='cm'?'cm':'inch'}${c.ok&&r.unit==='cm'?` (${f(c.inch,1)} in)`:''}`:'';
+  const water=`<div class="water">${S.lev!==false?`<div class="wb"><span><small>LEVELLING WATER (LTR)</small></span><span>${lev}</span></div>`:''}<div class="wb"><span><small>DYEBATH WATER %</small></span><i></i></div></div>`;
+  return `<section class="sheet">
+  <div class="sh-top"><div class="cell"><small>Dyeing start</small>&nbsp;</div><div class="cell"><small>Total water</small>&nbsp;</div><div class="cell"><small>Date</small><b>${esc(fmtDate(S.date))}</b></div><div class="cell"><small>Batch no</small>&nbsp;</div></div>
+  <div class="sh-title">${esc(p.title)}</div>
+  ${p.sub?`<div class="sh-sub">${esc(p.sub)}</div>`:''}
+  <div class="mcbox"><div class="mc"><small>MACHINE</small><strong>M/C ${esc(r.mc||'')}</strong><em>UNIT ${S.unit}</em></div>
+    <div class="mcgrid"><div class="cell"><small>GSM</small><b>${esc(r.gsm||'')}</b></div><div class="cell"><small>Dia</small><b>${dia}</b></div><div class="cell"><small>Load</small><b>${c.ok?f(c.kg,0)+' kg':''}</b></div><div class="cell"><small>Nozzle</small><b>${c.ok?c.noz:''}</b></div></div></div>
+  <div class="calc3"><div class="card"><small>L/W</small><b>${lw}</b></div><div class="card"><small>R/L</small><b>${rl}</b></div><div class="card"><small>Absorption rate</small><b>${esc(S.abs)} L/kg</b></div></div>
+  <div class="param"><div class="h">M/C ACTUAL PARAMETER</div><div class="h">STANDARD</div><div class="h">ACTUAL</div>
+    <div class="k">HYDRO</div><div></div><div></div>
+    <div class="k">PUMP</div><div></div><div></div>
+    <div class="k">REEL SPEED</div><div><b>${rs}</b></div><div></div>
+    <div class="k">C/T</div><div><b>${esc(S.cyc)} min</b></div><div></div></div>
+  ${water}
+  <div class="sign">SUPERVISOR’S SIGNATURE <i></i></div>
+  <div class="graphbox g2"><div class="gb-h"><span>PROCESS GRAPH</span><span>START ${esc(p.t0)}°C</span></div><div class="gb-s">${graphSVG(p).replace('xMinYMid','xMidYMid')}</div></div>
+  ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
+  ${chk}
+  <div class="ftr"><span>Process ${esc(p.id)} · Unit ${S.unit}</span><span>${isNaN(mc)?'':'M/C '+mc}</span></div>
+</section>`;
+}
+function finHTML(){return `<section class="sheet fin"><h3>PROCESS FOR FINISHING</h3>${FIN.map(t=>`<p>${esc(t)}</p>`).join('')}</section>`}
+
+// ---------- UI: one machine form (Unit 1 / Unit 2 kept separate)
+function procOptions(sel){return allIds().map(id=>{const p=proc(id);return `<option value="${esc(id)}"${id===sel?' selected':''}>${esc(id)} - ${esc(p.title.replace(/ - \S+$/,'').slice(0,46))}</option>`}).join('')}
+const UNITS={1:{lo:1,hi:23,label:'Unit 1 (MC 1 - 23)'},2:{lo:101,hi:106,label:'Unit 2 (MC 101 - 106)'}};
+const cur=()=>S.f[S.unit];
+function fillMcList(){$('mcList').innerHTML=MACH.filter(m=>m[0]>=UNITS[S.unit].lo&&m[0]<=UNITS[S.unit].hi).map(m=>`<option value="${m[0]}">${m[1]} kg, ${m[3]} nozzle</option>`).join('')}
+function renderRows(){ // fill the form from state
+  const r=cur();if(!allIds().includes(r.proc))r.proc=allIds()[0]||'';
+  $('pnoList').innerHTML=allIds().map(id=>`<option value="${esc(id)}">${esc(proc(id).title)}</option>`).join('');
+  $('fPno').value=r.proc;showName();
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-selected',String(+b.dataset.u===S.unit)));
+  fillMcList();
+  $('fMc').value=r.mc;$('fGsm').value=r.gsm;$('fDia').value=r.dia;$('fUnit').value=r.unit;$('fKg').value=r.kg;$('fLr').value=r.lr;
+  showRes();
+}
+function showRes(){
+  const r=cur(),n=parseInt(r.mc,10),u=UNITS[S.unit],mc=MC[n],c=calc(r);
+  let h='';
+  if(!r.mc)h='<span>Type the MC number to start.</span>';
+  else if(!mc||n<u.lo||n>u.hi)h=`<span class="warn">MC ${esc(r.mc)} is not in ${u.label}.</span>`;
+  else{
+    h=`<span>Capacity <b>${mc.cap} kg</b></span><span>Nozzles <b>${mc.noz}</b></span>`;
+    if(c.ok){h+=`<span>L/W <b>${f(c.lw,2)} g/m</b></span><span>R/L <b>${f(c.rl,1)} m</b></span><span>Reel <b>${f(c.reel,0)} m/min</b></span><span>Levelling <b>${c.lev>0?Math.round(c.lev)+' L':'-'}</b></span>`;
+      if(c.over)h+=`<span class="warn">Load is above machine capacity.</span>`}
+    else h+='<span>Enter GSM and dia to see L/W and R/L.</span>';
+  }
+  $('res').innerHTML=h;
+}
+function refresh(full){S.rows=[cur()];if(full)renderRows();else showRes();renderSheets();save()}
+[['fMc','mc'],['fGsm','gsm'],['fDia','dia'],['fKg','kg'],['fLr','lr']].forEach(([id,k])=>$(id).addEventListener('input',e=>{cur()[k]=e.target.value.trim();refresh(false)}));
+function showName(bad){const el=$('pname'),p=proc(cur().proc);el.classList.toggle('bad',!!bad);el.innerHTML=bad?'No process with this number.':`${esc(p.id)} - ${esc(p.title.replace(/\s*-\s*\S+$/,''))}${p.sub?`<small>${esc(p.sub)}</small>`:''}`}
+function findProc(v){v=String(v).trim().toUpperCase();if(!v)return null;const ids=allIds();if(ids.includes(v))return v;if(/^\d+$/.test(v)){const t=v.padStart(2,'0');if(ids.includes(t))return t}return null}
+$('fPno').addEventListener('input',e=>{const id=findProc(e.target.value);const bad=!id&&e.target.value.trim()!=='';e.target.style.borderColor=bad?'var(--warn)':'';
+  showName(bad);if(id){cur().proc=id;EID=id;refresh(false);renderEditor();showName()}});
+$('fPno').addEventListener('blur',e=>{const id=findProc(e.target.value);e.target.value=id||cur().proc;e.target.style.borderColor='';showName()});
+// keyboard: Enter / Down = next field, Up = previous field, Ctrl+Enter = print
+const NAV=['fMc','fPno','fGsm','fDia','fUnit','fKg','fLr'];
+NAV.forEach((id,i)=>$(id).addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();window.print();return}
+  const t=e.target,isSel=t.tagName==='SELECT';
+  const atStart=isSel||(t.selectionStart===0&&t.selectionEnd===0)||(t.selectionStart===0&&t.selectionEnd===t.value.length);
+  const atEnd=isSel||(t.selectionStart===t.value.length)||(t.selectionStart===0&&t.selectionEnd===t.value.length);
+  let to=null;
+  if(e.key==='Enter')to=i+1;
+  else if(e.key==='ArrowDown'&&!isSel)to=i+1;
+  else if(e.key==='ArrowUp'&&!isSel)to=i-1;
+  else if(e.key==='ArrowRight'&&atEnd)to=i+1;
+  else if(e.key==='ArrowLeft'&&atStart)to=i-1;
+  if(to===null)return;e.preventDefault();
+  if(to>=NAV.length){$('btnPrint2').focus();return}
+  if(to<0)return;const n=$(NAV[to]);n.focus();if(n.select)n.select()}));
+// typing an MC number picks the unit automatically: MC 1-23 = Unit 1, MC 101-106 = Unit 2 (each unit has its own process folder)
+$('fMc').addEventListener('input',e=>{
+  const n=parseInt(e.target.value,10);const u=(n>=1&&n<=23)?1:(n>=101&&n<=106)?2:0;
+  if(!u||u===S.unit)return;
+  const o=cur();S.unit=u;const t=cur();
+  t.mc=o.mc;t.gsm=o.gsm;t.dia=o.dia;t.unit=o.unit;t.kg=o.kg;t.lr=o.lr;t.proc=o.proc;o.mc='';
+  EID=null;S.rows=[cur()];renderRows();renderEditor();renderSheets();save()});
+NAV.forEach(id=>{const el=$(id);if(el.tagName==='INPUT')el.addEventListener('click',()=>{try{el.select()}catch(e){}})});
+$('btnPrint2').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();$('fLr').focus()}});
+$('btnPrint').onclick=$('btnPrint2').onclick=()=>window.print();
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{S.unit=+b.dataset.u;S.rows=[cur()];EID=null;renderRows();renderEditor();renderSheets();save()}));
+function renderSheets(){
+  const r=cur();const parts=[sheetHTML(r,calc(r))];
+  if(S.fin)parts.push(finHTML());
+  $('sheets').innerHTML=parts.join('');
+  $('cnt').textContent=parts.length+' page'+(parts.length===1?'':'s')+'. In the print dialog set Margins to "None" and Scale to 100%.';
+}
+function procOptionsAll(sel){return procOptions(sel)}
+
+// ---------- Google Apps Script sync
+const RK='procSheetPrinter.remote.v1';
+const DEF_GS='https://script.google.com/macros/s/AKfycbwWYqPhCk-hdCA_gSMY1SFk3q7qtDXKvN6pUDnzFRCyS1uB6KVlmow1UlceO3lSxto/exec';
+let GS={url:DEF_GS,key:'',auto:true};
+try{const r=JSON.parse(localStorage.getItem(RK)||'null');if(r)GS=Object.assign(GS,r)}catch(e){}
+if(!GS.url)GS.url=DEF_GS;GS.key=GS.key||'';
+const saveR=()=>{try{localStorage.setItem(RK,JSON.stringify(GS))}catch(e){}};
+function gsMsg(t,bad){const ch=$('gchip');if(ch){ch.textContent=(bad?'⚠ ':'☁ ')+(t.length>52?t.slice(0,52)+'…':t);ch.classList.toggle('bad',!!bad);ch.title=GS.url+'\n(click to copy the Google script URL)'}$('gsMsg').textContent=t;$('gsMsg').style.color=bad?'var(--warn)':'';$('gsState').textContent=t.length>46?t.slice(0,46)+'...':t}
+async function rGet(){
+  const u=GS.url+(GS.url.includes('?')?'&':'?')+'action=list&key='+encodeURIComponent(GS.key);
+  const r=await fetch(u);const j=await r.json();if(!j.ok)throw new Error(j.error||'Failed');return j.processes||[]}
+async function rPost(payload){
+  const r=await fetch(GS.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:GS.key},payload))});
+  const j=await r.json();if(!j.ok)throw new Error(j.error||'Failed');return j}
+async function gsPush(id){
+  if(!GS.url)return gsMsg('Paste the Google Script URL first.',true);
+  const p=S.custom[ck(id)];if(!p)return;
+  try{gsMsg('Saving...');await rPost({action:'save',process:Object.assign({},p,{id:ck(id),did:id,u:S.unit})});gsMsg('Saved '+id+' to Google at '+new Date().toLocaleTimeString())}
+  catch(e){gsMsg('Could not save: '+e.message,true)}}
+async function gsDelete(id){
+  if(!GS.url)return;try{await rPost({action:'delete',id:ck(id)});gsMsg('Removed '+id+' from Google')}catch(e){gsMsg('Could not remove: '+e.message,true)}}
+async function gsPull(quiet){
+  if(!GS.url)return;
+  try{gsMsg('Loading...');const list=await rGet();
+    list.forEach(p=>{if(p&&p.id){const q=Object.assign({},p);if(q.did)q.id=q.did;S.custom[p.id]=q}});
+    save();renderRows();renderEditor();renderSheets();gsMsg('Loaded '+list.length+' saved process'+(list.length===1?'':'es')+' from Google')}
+  catch(e){gsMsg('Could not load: '+e.message,true)}}
+let gsT=null;
+function markDirty(){if(!GS.url||!GS.auto)return;clearTimeout(gsT);const id=EID;gsT=setTimeout(()=>gsPush(id),1500)}
+$('gsUrl').value=GS.url;$('gsKey').value=GS.key;$('gsAuto').checked=GS.auto;
+$('gsUrl').addEventListener('input',e=>{GS.url=e.target.value.trim();saveR()});
+$('gsKey').addEventListener('input',e=>{GS.key=e.target.value;saveR()});
+$('gsAuto').onchange=e=>{GS.auto=e.target.checked;saveR()};
+$('gsSave').onclick=()=>{edProc();gsPush(EID)};
+$('gsLoad').onclick=()=>gsPull();
+if(!GS.url)$('gsState').textContent='(not connected)';
+$('gchip').textContent='☁ Google script connected';$('gchip').title=GS.url+'\n(click to copy the Google script URL)';
+$('gchip').onclick=()=>{try{navigator.clipboard.writeText(GS.url);gsMsg('Script URL copied')}catch(e){}};
+
+// ---------- UI: graph editor
+let EID=null,HI=null;
+function setHi(i){if(HI===i)return;HI=i;const p=proc(EID);$('edPrev').innerHTML=graphSVG(p,HI);document.querySelectorAll('#steps tr').forEach(tr=>tr.classList.toggle('hl',+tr.dataset.i===HI))}
+const TYPES=[['G','Plain line'],['R','Rectangle - linear'],['M','Slope both sides - migration'],['T','Triangle - recirculation'],['U','Ramp up - progressive']];
+function edProc(){if(!EID)return EMPTY();return S.custom[ck(EID)]||(S.custom[ck(EID)]=clone(orig(EID)))}
+function renderEditor(){
+  const ids=allIds();if(!ids.includes(EID))EID=ids[0]||null;
+  $('edProc').innerHTML=procOptions(EID);
+  const p=proc(EID);
+  $('edT0').value=p.t0;$('edTitle').value=p.title;
+  $('steps').innerHTML=p.steps.map((s,i)=>`<tr data-i="${i}">
+   <td style="white-space:nowrap"><button class="ghost stepbtn" data-mv="-1" aria-label="Move up" title="Move up">↑</button><button class="ghost stepbtn" data-mv="1" aria-label="Move down" title="Move down">↓</button><button class="ghost stepbtn del" data-rm="1" aria-label="Delete step" title="Delete this step">✕ Delete</button></td>
+   <td><select data-k="t" aria-label="Shape">${TYPES.map(t=>`<option value="${t[0]}"${s.t===t[0]?' selected':''}>${t[1]}</option>`).join('')}</select></td>
+   <td><input class="sm" data-k="m" value="${esc(s.m)}" ${s.t==='M'||s.t==='U'?'disabled':''} aria-label="Minutes"></td>
+   <td><input data-k="top" value="${esc(s.top)}" aria-label="Label above" style="min-width:110px"></td>
+   <td><input data-k="bot" value="${esc(s.bot)}" ${s.t==='M'||s.t==='U'?'disabled':''} aria-label="Label below" style="min-width:90px"></td>
+   <td><input class="sm" data-k="up" value="${esc(s.up)}" ${s.t==='M'||s.t==='U'?'':'disabled'} aria-label="Rate up"></td>
+   <td><input class="sm" data-k="dn" value="${esc(s.dn)}" ${s.t==='M'?'':'disabled'} aria-label="Rate down"></td>
+   <td><input class="sm" data-k="t2" value="${esc(s.t2)}" ${s.t==='M'||s.t==='U'?'':'disabled'} aria-label="Temp after"></td></tr>`).join('');
+  $('edPrev').innerHTML=graphSVG(p,HI);
+  $('edWarn').innerHTML=!EID?'<span class="warn">No process in this unit yet. Press "Copy as new process" to create one.</span>':p.verify?'<span class="warn">The graph in the Word file for this process was cut off or hard to read. Check it against the original before printing.</span>':'';
+}
+function edChanged(){save();markDirty();$('edPrev').innerHTML=graphSVG(proc(EID),HI);renderSheets();renderRows()}
+$('edProc').onchange=e=>{EID=e.target.value;cur().proc=EID;S.rows=[cur()];renderEditor();renderRows();renderSheets();save()};
+$('edT0').addEventListener('input',e=>{const p=edProc();p.t0=parseFloat(e.target.value)||0;edChanged()});
+$('edTitle').addEventListener('input',e=>{edProc().title=e.target.value;edChanged()});
+$('steps').addEventListener('mouseover',e=>{const tr=e.target.closest('tr');if(tr)setHi(+tr.dataset.i)});
+$('steps').addEventListener('mouseleave',()=>setHi(null));
+$('steps').addEventListener('focusin',e=>{const tr=e.target.closest('tr');if(tr)setHi(+tr.dataset.i)});
+$('steps').addEventListener('focusout',()=>setHi(null));
+$('steps').addEventListener('input',e=>{const tr=e.target.closest('tr'),k=e.target.dataset.k;if(!tr||!k)return;const p=edProc(),s=p.steps[+tr.dataset.i];
+  if(k==='up'||k==='dn'||k==='t2'){const v=e.target.value.trim();s[k]=v===''?'':(isNaN(+v)?v:+v)}else s[k]=e.target.value;edChanged()});
+$('steps').addEventListener('change',e=>{if(e.target.dataset.k==='t'){const tr=e.target.closest('tr'),p=edProc(),s=p.steps[+tr.dataset.i];s.t=e.target.value;
+  if(s.t==='M'&&s.up===undefined){s.up=1.5;s.dn=1.5;s.t2=''}if(s.t==='U'&&s.up===undefined){s.up=1.0;s.t2=''}save();markDirty();renderEditor();renderSheets()}});
+$('steps').addEventListener('click',e=>{const tr=e.target.closest('tr');if(!tr)return;const i=+tr.dataset.i,p=edProc();
+  if(e.target.dataset.rm){p.steps.splice(i,1)}else if(e.target.dataset.mv){const j=i+ +e.target.dataset.mv;if(j<0||j>=p.steps.length)return;[p.steps[i],p.steps[j]]=[p.steps[j],p.steps[i]]}else return;
+  save();markDirty();renderEditor();renderSheets()});
+$('btnStep').onclick=()=>{edProc().steps.push({t:'G',m:'5',top:'',bot:''});save();markDirty();renderEditor();renderSheets()};
+$('btnReset').onclick=()=>{const old=EID;gsDelete(old);if(orig(EID)){delete S.custom[ck(EID)]}else{delete S.custom[ck(EID)];EID=null}save();markDirty();renderEditor();renderSheets();fillDef()};
+$('btnDup').onclick=()=>{const src=edProc();let n=14;while(allIds().includes(String(n)))n++;const id=String(n);S.custom[ck(id)]=Object.assign(clone(src),{id,u:S.unit,title:src.title.replace(/ - \S+$/,'')+' - '+id+' (new)',verify:false});EID=id;cur().proc=id;S.rows=[cur()];save();markDirty();renderEditor();renderRows();renderSheets();gsPush(id)};
+function fillDef(){showName()}
+
+// ---------- boot
+S.date=todayISO();$('fDate').value=S.date;
+$('fDate').addEventListener('input',e=>{S.date=e.target.value;renderSheets()});
+$('cyc').value=S.cyc;$('abs').value=S.abs;$('fills').value=S.fills;$('optChecks').checked=S.chk;$('optFin').checked=S.fin;$('optLev').checked=S.lev!==false;
+[['cyc','cyc'],['abs','abs'],['fills','fills']].forEach(([id,k])=>$(id).addEventListener('input',e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v)&&(k!=='cyc'||v>0)){S[k]=v;refresh(false)}}));
+[['optLev','lev'],['optChecks','chk'],['optFin','fin']].forEach(([id,k])=>$(id).addEventListener('change',e=>{S[k]=e.target.checked;renderSheets();save()}));
+S.rows=[cur()];EID=allIds().includes(cur().proc)?cur().proc:(allIds()[0]||null);
+renderRows();renderEditor();renderSheets();
+if(GS.url)gsPull(true);
+</script>
+</body>
+</html>
