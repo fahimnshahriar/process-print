@@ -37,6 +37,7 @@ button.ghost{background:transparent}
 .seg button[aria-selected=true]{background:var(--accent);color:var(--accent-fg)}
 .gs{margin-bottom:12px;border:1px solid var(--line);border-radius:4px;padding:8px 12px}
 .gs summary{cursor:pointer;font-weight:600}
+.edstate{font-size:12px;font-weight:700;align-self:center}.edstate.un{color:#c2410c}.edstate.ok{color:#15803d}
 .row.oneline{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.row.oneline label.f{flex:none}
 .pname{font-size:15px;font-weight:600;flex:1 1 280px;min-width:0;align-self:end;padding-bottom:6px;line-height:1.3}
 .pname small{display:block;font-weight:400;color:var(--muted);font-size:13px}
@@ -99,6 +100,12 @@ td.calc.bad{color:var(--warn)}
 .mcgrid .cell{min-height:8.5mm}.mcgrid .cell b{font-size:13pt}
 .calc3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2.5mm}
 .card{border:1px solid #555;border-radius:2mm;padding:1mm 3mm}
+.card.rlc small{display:flex;justify-content:space-between;align-items:center;line-height:1}
+.card.rlc b{white-space:nowrap}
+.card .ds{display:inline-flex;align-items:center;gap:1.2mm;font-size:9.5pt;letter-spacing:0;font-weight:800;white-space:nowrap;text-transform:none}
+.card .ds i{display:inline-block;width:4mm;height:4mm;border:1.2px solid #444;border-radius:.8mm;margin-left:2.2mm}
+.card .ds i:first-child{margin-left:0}
+.gb-h .tt{font-size:9.5pt;letter-spacing:.04em}
 .card b{display:block;font-size:13pt;font-weight:800;min-height:5.5mm}
 .param{display:grid;grid-template-columns:50mm 1fr 1fr;font-size:10.5pt;border-top:1px solid #555;border-left:1px solid #555}
 .param div{border-right:1px solid #555;border-bottom:1px solid #555;padding:.6mm 3mm;min-height:6.2mm;display:flex;align-items:center}
@@ -107,17 +114,17 @@ td.calc.bad{color:var(--warn)}
 .water{display:flex;gap:2.5mm}
 .water .wb{flex:1;border:1px solid #555;border-radius:2mm;padding:1.2mm 3mm;font-weight:800;font-size:12.5pt;display:flex;justify-content:space-between;align-items:baseline;gap:3mm}
 .water .wb small{font-size:8pt;letter-spacing:.08em;color:#444}
-.water .wb i{flex:1;border-bottom:1.1.2px solid #555;min-width:14mm;height:5mm}
+.water .wb i{flex:1;border-bottom:1px solid #555;min-width:14mm;height:5mm}
 .sign{display:flex;align-items:flex-end;gap:3mm;font-size:9.5pt;font-weight:700}
 .chkbox .sign{padding:1mm 3.5mm 2mm}
-.sign i{flex:1;border-bottom:1.1.2px solid #555;height:5mm}
+.sign i{flex:1;border-bottom:1px solid #555;height:5mm}
 .note{font-size:9.5pt;font-weight:700;text-align:center;margin:0;padding:1mm 3mm;border:1px dashed #666;border-radius:2mm;background:#fafafa}
 .chkbox{border:1px solid #555;border-radius:2mm;overflow:hidden}
 .chk-h{background:#f4f4f4;border-bottom:1px solid #555;padding:1mm 3mm;font-size:8.5pt;font-weight:800;letter-spacing:.08em}
 .checks{columns:2;column-gap:8mm;font-size:9.5pt;font-weight:700;padding:1.6mm 3.5mm 0}
 .checks div{display:flex;gap:2mm;margin-bottom:1.5mm;break-inside:avoid;align-items:flex-end}
 .checks .bx{width:3.4mm;height:3.4mm;border:1px solid #555;border-radius:.8mm;flex:none;align-self:center}
-.checks .ln{flex:1;border-bottom:1.1.2px solid #555;height:4.4mm}
+.checks .ln{flex:1;border-bottom:1px solid #555;height:4.4mm}
 .ftr{position:absolute;left:14mm;right:14mm;bottom:6mm;font-size:7.5pt;color:#444;display:flex;justify-content:space-between;border-top:1px solid #999;padding-top:1.2mm}
 /* Google status chip, bottom right of the screen (never printed) */
 .gchip{position:fixed;right:10px;bottom:10px;z-index:50;max-width:62vw;font-size:12px;padding:5px 11px;border-radius:999px;background:var(--panel);color:var(--fg);border:1px solid var(--line);box-shadow:0 1px 5px rgba(0,0,0,.2);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -166,7 +173,7 @@ td.calc.bad{color:var(--warn)}
   <div class="row" style="margin:12px 0 4px">
     <label class="f">Date<input id="fDate" type="date" style="width:150px"></label>
     <label class="f">Tank fills deducted<input id="fills" class="num" type="number" step="1" min="0" value="4"></label>
-    <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optLev" checked> Show levelling water</label>
+    <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optLev" checked> Show levelling water amount</label>
     <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optChecks" checked> Print check list</label>
     <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optFin"> Add finishing notes page</label>
   </div>
@@ -180,7 +187,6 @@ td.calc.bad{color:var(--warn)}
     <div class="row" style="margin:10px 0">
       <label class="f" style="flex:1;min-width:260px">Google Script URL (Web app URL)<input id="gsUrl" placeholder="https://script.google.com/macros/s/.../exec"></label>
       <label class="f">Password (if set)<input id="gsKey" type="password" class="num" style="width:130px" autocomplete="off"></label>
-      <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="gsAuto" checked> Save automatically</label>
       <button id="gsSave" type="button" class="pri">Save this process</button>
       <button id="gsLoad" type="button">Load from Google</button>
     </div>
@@ -191,7 +197,9 @@ td.calc.bad{color:var(--warn)}
     <label class="f">Start temp °C<input id="edT0" class="num" type="number"></label>
     <label class="f" style="flex:1;min-width:200px">Graph title<input id="edTitle"></label>
     <button id="btnDup" type="button">Copy as new process</button>
-    <button class="ghost" id="btnReset" type="button">Reset to original</button>
+    <button class="pri" id="btnSaveP" type="button">Save changes</button>
+    <button class="ghost" id="btnReset" type="button">Discard unsaved changes</button>
+    <span id="edState" class="edstate" aria-live="polite"></span>
   </div>
   <div class="ed">
     <div class="tw"><table class="steps">
@@ -200,6 +208,7 @@ td.calc.bad{color:var(--warn)}
     </table>
     <div class="row" style="margin-top:8px"><button id="btnStep" type="button">Add step</button></div></div>
     <div>
+      <div id="edTotal" style="font-weight:800;margin:0 0 6px"></div>
       <div class="prev" id="edPrev"></div>
       <div class="legend">
         <span><b>Rectangle</b> = linear dosing</span>
@@ -282,12 +291,21 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const SK='procSheetPrinter.v3';
 const blank=mc=>({mc:mc,proc:'01',gsm:'',dia:'',unit:'in',kg:'',lr:''});
 let S={unit:1,f:{1:{mc:'20',proc:'',gsm:'250',dia:'65',unit:'in',kg:'68',lr:''},2:blank('')},rows:[],cyc:2,abs:2,fills:4,chk:true,fin:false,lev:true,custom:{}};
-try{const s=JSON.parse(localStorage.getItem(SK)||'null');if(s&&s.f)S=Object.assign(S,s)}catch(e){}
-const save=()=>{try{localStorage.setItem(SK,JSON.stringify(S))}catch(e){}};
+// Only SAVED processes (S.custom) are kept on this computer. Everything else (machine, GSM, kg, settings, unsaved edits)
+// always starts from the original defaults when the page is opened. Saved processes are never deleted: a 2nd backup copy is kept.
+const SKB=SK+'.backup';
+const readCustom=k=>{try{const s=JSON.parse(localStorage.getItem(k)||'null');return s&&s.custom&&typeof s.custom==='object'?s.custom:null}catch(e){return null}};
+{const c=readCustom(SK),d=readCustom(SKB);S.custom=Object.assign({},d||{},c||{})}
+const save=()=>{try{
+  const old=localStorage.getItem(SK);
+  if(old&&readCustom(SK)&&JSON.stringify(readCustom(SK))!==JSON.stringify(S.custom))localStorage.setItem(SKB,old);
+  localStorage.setItem(SK,JSON.stringify({custom:S.custom}))}catch(e){}};
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 const ck=id=>S.unit===1?'U1-'+id:id; // custom-edit key, unique per unit
 const orig=id=>LIB.find(p=>p.id===id&&p.u===S.unit);
-const proc=id=>S.custom[ck(id)]||orig(id)||EMPTY();
-const allIds=()=>{const ids=LIB.filter(p=>p.u===S.unit).map(p=>p.id);Object.keys(S.custom).forEach(k=>{const c=S.custom[k];if(c&&(c.u||2)===S.unit&&!ids.includes(c.id))ids.push(c.id)});return ids};
+const DRAFT={}; // unsaved edits: memory only, never stored, so a reload returns to the saved/original version
+const proc=id=>DRAFT[ck(id)]||S.custom[ck(id)]||orig(id)||EMPTY();
+const allIds=()=>{const ids=LIB.filter(p=>p.u===S.unit).map(p=>p.id);Object.keys(S.custom).concat(Object.keys(DRAFT)).forEach(k=>{const c=DRAFT[k]||S.custom[k];if(c&&(c.u||2)===S.unit&&!ids.includes(c.id))ids.push(c.id)});return ids};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ---------- calc
@@ -370,6 +388,10 @@ function graphSVG(p,hi){
 // ---------- sheets
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 function fmtDate(v){const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(v||'');return m?`${m[3]}/${m[2]}/${m[1]}`:''}
+function totalMin(p){let t=0;(p.steps||[]).forEach(st=>{if(st.t==='M'||st.t==='U')return;const n=String(st.m||'').match(/\d+(?:\.\d+)?/g);if(n)n.forEach(x=>t+=parseFloat(x))});return Math.round(t)}
+function fmtTime(m){const h=Math.floor(m/60),r=m%60;return h?(h+' hr'+(r?' '+r+' min':'')):(r+' min')}
+const nowStr=()=>{const d=new Date(),p2=n=>String(n).padStart(2,'0');let h=d.getHours();const ap=h>=12?'PM':'AM';h=h%12||12;return p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear()+' '+p2(h)+':'+p2(d.getMinutes())+' '+ap};
+window.addEventListener('beforeprint',()=>document.querySelectorAll('.ptime').forEach(e=>e.textContent='Printed: '+nowStr()));
 function sheetHTML(r,c){
   const p=proc(r.proc);const mc=parseInt(r.mc,10);
   const SIGN='<div class="sign">SUPERVISOR’S SIGNATURE <i></i></div>';
@@ -377,24 +399,24 @@ function sheetHTML(r,c){
   const lw=c.ok?`${f(c.lw,2)} g/m`:'', rl=c.ok?`${f(c.rl,1)} m`:'', rs=c.ok?`${f(c.reel,0)} m/min`:'';
   const lev=c.ok&&c.lev>0?`${Math.round(c.lev)} L`:'';
   const dia=r.gsm?`${esc(r.dia)} ${r.unit==='cm'?'cm':'inch'}${c.ok&&r.unit==='cm'?` (${f(c.inch,1)} in)`:''}`:'';
-  const water=`<div class="water">${S.lev!==false?`<div class="wb"><span><small>LEVELLING WATER (LTR)</small></span><span>${lev}</span></div>`:''}<div class="wb"><span><small>DYEBATH WATER %</small></span><i></i></div></div>`;
+  const water=`<div class="water"><div class="wb"><span><small>LEVELLING WATER (LTR)</small></span>${S.lev!==false&&lev?`<span>${lev}</span>`:'<i></i>'}</div><div class="wb"><span><small>DYEBATH WATER %</small></span><i></i></div></div>`;
   return `<section class="sheet">
   <div class="sh-top"><div class="cell"><small>Dyeing start</small>&nbsp;</div><div class="cell"><small>Total water</small>&nbsp;</div><div class="cell"><small>Date</small><b>${esc(fmtDate(S.date))}</b></div><div class="cell"><small>Batch no</small>&nbsp;</div></div>
   <div class="sh-title">${esc(p.title)}</div>
   ${p.sub?`<div class="sh-sub">${esc(p.sub)}</div>`:''}
   <div class="mcbox"><div class="mc"><small>MACHINE</small><strong>M/C ${esc(r.mc||'')}</strong><em>UNIT ${S.unit}</em></div>
     <div class="mcgrid"><div class="cell"><small>GSM</small><b>${esc(r.gsm||'')}</b></div><div class="cell"><small>Dia</small><b>${dia}</b></div><div class="cell"><small>Load</small><b>${c.ok?f(c.kg,0)+' kg':''}</b></div><div class="cell"><small>Nozzle</small><b>${c.ok?c.noz:''}</b></div></div></div>
-  <div class="calc3"><div class="card"><small>L/W</small><b>${lw}</b></div><div class="card"><small>R/L</small><b>${rl}</b></div><div class="card"><small>Absorption rate</small><b>${esc(S.abs)} L/kg</b></div></div>
+  <div class="calc3"><div class="card"><small>L/W</small><b>${lw}</b></div><div class="card rlc"><small>R/L<span class="ds"><i></i>Double<i></i>Single</span></small><b>${rl}</b></div><div class="card"><small>Absorption rate</small><b>${esc(S.abs)} L/kg</b></div></div>
   <div class="param"><div class="h">M/C ACTUAL PARAMETER</div><div class="h">STANDARD</div><div class="h">ACTUAL</div>
     <div class="k">HYDRO</div><div></div><div></div>
     <div class="k">PUMP</div><div></div><div></div>
     <div class="k">REEL SPEED</div><div><b>${rs}</b></div><div></div>
     <div class="k">C/T</div><div><b>${esc(S.cyc)} min</b></div><div></div></div>
   ${water}
-  <div class="graphbox g2"><div class="gb-h"><span>PROCESS GRAPH</span><span>START ${esc(p.t0)}°C</span></div><div class="gb-s">${graphSVG(p).replace('xMinYMid','xMidYMid')}</div></div>
+  <div class="graphbox g2"><div class="gb-h"><span>PROCESS GRAPH</span><span class="tt">TOTAL TIME: ${fmtTime(totalMin(p))}</span><span>START ${esc(p.t0)}°C</span></div><div class="gb-s">${graphSVG(p).replace('xMinYMid','xMidYMid')}</div></div>
   ${p.note?`<div class="note">${esc(p.note)}</div>`:''}
   ${chk}
-  <div class="ftr"><span>Process ${esc(p.id)} · Unit ${S.unit}</span><span>${isNaN(mc)?'':'M/C '+mc}</span></div>
+  <div class="ftr"><span>Process ${esc(p.id)} · Unit ${S.unit}</span><span class="ptime">Printed: ${nowStr()}</span></div>
 </section>`;
 }
 function finHTML(){return `<section class="sheet fin"><h3>PROCESS FOR FINISHING</h3>${FIN.map(t=>`<p>${esc(t)}</p>`).join('')}</section>`}
@@ -431,7 +453,7 @@ function refresh(full){S.rows=[cur()];if(full)renderRows();else showRes();render
 function showName(bad){const el=$('pname'),p=proc(cur().proc);el.classList.toggle('bad',!!bad);el.innerHTML=bad?'No process with this number.':`${esc(p.id)} - ${esc(p.title.replace(/\s*-\s*\S+$/,''))}${p.sub?`<small>${esc(p.sub)}</small>`:''}`}
 function findProc(v){v=String(v).trim().toUpperCase();if(!v)return null;const ids=allIds();if(ids.includes(v))return v;if(/^\d+$/.test(v)){const t=v.padStart(2,'0');if(ids.includes(t))return t}return null}
 $('fPno').addEventListener('input',e=>{const id=findProc(e.target.value);const bad=!id&&e.target.value.trim()!=='';e.target.style.borderColor=bad?'var(--warn)':'';
-  showName(bad);if(id){cur().proc=id;EID=id;refresh(false);renderEditor();showName()}});
+  showName(bad);if(id){if(EID!==id)dropDrafts();cur().proc=id;EID=id;refresh(false);renderEditor();showName()}});
 $('fPno').addEventListener('blur',e=>{const id=findProc(e.target.value);e.target.value=id||cur().proc;e.target.style.borderColor='';showName()});
 // keyboard: Enter / Down = next field, Up = previous field, Ctrl+Enter = print
 const NAV=['fMc','fPno','fGsm','fDia','fUnit','fKg','fLr','abs','cyc'];
@@ -459,7 +481,7 @@ $('fMc').addEventListener('input',e=>{
 NAV.forEach(id=>{const el=$(id);if(el.tagName==='INPUT')el.addEventListener('click',()=>{try{el.select()}catch(e){}})});
 $('btnPrint2').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();$('cyc').focus()}});
 $('btnPrint').onclick=$('btnPrint2').onclick=()=>window.print();
-document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{S.unit=+b.dataset.u;S.rows=[cur()];EID=null;renderRows();renderEditor();renderSheets();save()}));
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{dropDrafts();S.unit=+b.dataset.u;S.rows=[cur()];EID=null;renderRows();renderEditor();renderSheets();save()}));
 function renderSheets(){
   const r=cur();const parts=[sheetHTML(r,calc(r))];
   if(S.fin)parts.push(finHTML());
@@ -496,12 +518,11 @@ async function gsPull(quiet){
     save();renderRows();renderEditor();renderSheets();gsMsg('Loaded '+list.length+' saved process'+(list.length===1?'':'es')+' from Google')}
   catch(e){gsMsg('Could not load: '+e.message,true)}}
 let gsT=null;
-function markDirty(){if(!GS.url||!GS.auto)return;clearTimeout(gsT);const id=EID;gsT=setTimeout(()=>gsPush(id),1500)}
-$('gsUrl').value=GS.url;$('gsKey').value=GS.key;$('gsAuto').checked=GS.auto;
+function markDirty(){stateMsg()}
+$('gsUrl').value=GS.url;$('gsKey').value=GS.key;
 $('gsUrl').addEventListener('input',e=>{GS.url=e.target.value.trim();saveR()});
 $('gsKey').addEventListener('input',e=>{GS.key=e.target.value;saveR()});
-$('gsAuto').onchange=e=>{GS.auto=e.target.checked;saveR()};
-$('gsSave').onclick=()=>{edProc();gsPush(EID)};
+$('gsSave').onclick=()=>saveProc();
 $('gsLoad').onclick=()=>gsPull();
 if(!GS.url)$('gsState').textContent='(not connected)';
 $('gchip').textContent='☁ Google script connected';$('gchip').title=GS.url+'\n(click to copy the Google script URL)';
@@ -511,9 +532,14 @@ $('gchip').onclick=()=>{try{navigator.clipboard.writeText(GS.url);gsMsg('Script 
 let EID=null,HI=null,MV=null;
 const COLS=['#ff8f8f','#ffb762','#f2d83b','#7fd35a','#3fc8bd','#5fa2ff','#a98aff','#ff7ac8'];
 const newColor=p=>{const u=p.steps.map(x=>x.c);const f=COLS.map((_,i)=>i).filter(i=>!u.includes(i));return f.length?f[0]:Math.floor(Math.random()*COLS.length)};
-function setHi(i){if(HI===i)return;HI=i;const p=proc(EID);$('edPrev').innerHTML=graphSVG(p,HI);document.querySelectorAll('#steps tr').forEach(tr=>tr.classList.toggle('hl',+tr.dataset.i===HI))}
+function setPrev(p,hi){$('edPrev').innerHTML=graphSVG(p,hi);$('edTotal').textContent='Total time: '+fmtTime(totalMin(p))+'  (sum of the minute marks under the graph)'}
+function setHi(i){if(HI===i)return;HI=i;const p=proc(EID);setPrev(p,HI);document.querySelectorAll('#steps tr').forEach(tr=>tr.classList.toggle('hl',+tr.dataset.i===HI))}
 const TYPES=[['G','Plain line'],['R','Rectangle - linear'],['M','Slope both sides - migration'],['T','Triangle - recirculation'],['U','Ramp up - progressive']];
-function edProc(){if(!EID)return EMPTY();return S.custom[ck(EID)]||(S.custom[ck(EID)]=clone(orig(EID)))}
+function edProc(){if(!EID)return EMPTY();const k=ck(EID);return DRAFT[k]||(DRAFT[k]=clone(S.custom[k]||orig(EID)))}
+const hasDraft=()=>Object.keys(DRAFT).length>0;
+function stateMsg(t){const e=$('edState');if(!e)return;const d=hasDraft();e.textContent=t||(d?'● Unsaved changes — will reset if you do not press Save':'');e.className='edstate'+(d?' un':' ok')}
+function dropDrafts(){if(!hasDraft())return;Object.keys(DRAFT).forEach(k=>delete DRAFT[k]);stateMsg()}
+window.addEventListener('beforeunload',e=>{if(hasDraft()){e.preventDefault();e.returnValue=''}});
 window.__COLS=COLS;
 function renderEditor(){
   const ids=allIds();if(!ids.includes(EID))EID=ids[0]||null;
@@ -531,12 +557,12 @@ function renderEditor(){
    <td><input class="sm" data-k="up" value="${esc(s.up)}" ${s.t==='M'||s.t==='U'?'':'disabled'} aria-label="Rate up"></td>
    <td><input class="sm" data-k="dn" value="${esc(s.dn)}" ${s.t==='M'?'':'disabled'} aria-label="Rate down"></td>
    <td><input class="sm" data-k="t2" value="${esc(s.t2)}" ${s.t==='M'||s.t==='U'?'':'disabled'} aria-label="Temp after"></td></tr>`).join('');
-  $('edPrev').innerHTML=graphSVG(p,HI);
+  setPrev(p,HI);
   if(MV!=null){const mr=document.querySelector('#steps tr.moved');if(mr)mr.scrollIntoView({block:'nearest'});MV=null}
   $('edWarn').innerHTML=!EID?'<span class="warn">No process in this unit yet. Press "Copy as new process" to create one.</span>':p.verify?'<span class="warn">The graph in the Word file for this process was cut off or hard to read. Check it against the original before printing.</span>':'';
 }
-function edChanged(){save();markDirty();$('edPrev').innerHTML=graphSVG(proc(EID),HI);renderSheets();renderRows()}
-$('edProc').onchange=e=>{EID=e.target.value;cur().proc=EID;S.rows=[cur()];renderEditor();renderRows();renderSheets();save()};
+function edChanged(){save();markDirty();setPrev(proc(EID),HI);renderSheets();renderRows()}
+$('edProc').onchange=e=>{dropDrafts();EID=e.target.value;cur().proc=EID;S.rows=[cur()];renderEditor();renderRows();renderSheets();save()};
 $('edT0').addEventListener('input',e=>{const p=edProc();p.t0=parseFloat(e.target.value)||0;edChanged()});
 $('edTitle').addEventListener('input',e=>{edProc().title=e.target.value;edChanged()});
 $('steps').addEventListener('mouseover',e=>{const tr=e.target.closest('tr');if(tr&&tr.dataset.i!==undefined)setHi(+tr.dataset.i)});
@@ -552,8 +578,16 @@ $('steps').addEventListener('click',e=>{const ib=e.target.closest('[data-ins]');
   if(e.target.dataset.rm){p.steps.splice(i,1)}else if(e.target.dataset.mv){const j=i+ +e.target.dataset.mv;if(j<0||j>=p.steps.length)return;[p.steps[i],p.steps[j]]=[p.steps[j],p.steps[i]];MV=j;HI=j}else return;
   save();markDirty();renderEditor();renderSheets()});
 $('btnStep').onclick=()=>{const pp=edProc();pp.steps.push({t:'G',m:'5',top:'',bot:'',c:newColor(pp)});MV=pp.steps.length-1;HI=MV;save();markDirty();renderEditor();renderSheets()};
-$('btnReset').onclick=()=>{const old=EID;gsDelete(old);if(orig(EID)){delete S.custom[ck(EID)]}else{delete S.custom[ck(EID)];EID=null}save();markDirty();renderEditor();renderSheets();fillDef()};
-$('btnDup').onclick=()=>{const src=edProc();let n=14;while(allIds().includes(String(n)))n++;const id=String(n);S.custom[ck(id)]=Object.assign(clone(src),{id,u:S.unit,title:src.title.replace(/ - \S+$/,'')+' - '+id+' (new)',verify:false});EID=id;cur().proc=id;S.rows=[cur()];save();markDirty();renderEditor();renderRows();renderSheets();gsPush(id)};
+function saveProc(){
+  if(!EID)return;const k=ck(EID);
+  if(DRAFT[k]){S.custom[k]=DRAFT[k];delete DRAFT[k]}
+  else if(!S.custom[k]&&orig(EID)){S.custom[k]=clone(orig(EID))}
+  save();stateMsg('✓ Saved '+new Date().toLocaleTimeString());renderEditor();renderSheets();renderRows();
+  if(GS.url)gsPush(EID)}
+$('btnSaveP').onclick=saveProc;
+// never deletes a saved process: it only throws away edits you have not saved yet
+$('btnReset').onclick=()=>{delete DRAFT[ck(EID)];renderEditor();renderSheets();renderRows();stateMsg();fillDef()};
+$('btnDup').onclick=()=>{const src=edProc();let n=14;while(allIds().includes(String(n)))n++;const id=String(n);DRAFT[ck(id)]=Object.assign(clone(src),{id,u:S.unit,title:src.title.replace(/ - \S+$/,'')+' - '+id+' (new)',verify:false});EID=id;cur().proc=id;S.rows=[cur()];save();markDirty();renderEditor();renderRows();renderSheets()};
 function fillDef(){showName()}
 
 // ---------- boot
