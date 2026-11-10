@@ -187,8 +187,6 @@ td.calc.bad{color:var(--warn)}
     <div class="row" style="margin:10px 0">
       <label class="f" style="flex:1;min-width:260px">Google Script URL (Web app URL)<input id="gsUrl" placeholder="https://script.google.com/macros/s/.../exec"></label>
       <label class="f">Password (if set)<input id="gsKey" type="password" class="num" style="width:130px" autocomplete="off"></label>
-      <button id="gsSave" type="button" class="pri">Save this process</button>
-      <button id="gsLoad" type="button">Load from Google</button>
     </div>
     <p class="hint" id="gsMsg" style="margin:0 0 6px"></p>
   </details>
@@ -198,7 +196,7 @@ td.calc.bad{color:var(--warn)}
     <label class="f" style="flex:1;min-width:200px">Graph title<input id="edTitle"></label>
     <button id="btnDup" type="button">Copy as new process</button>
     <button class="pri" id="btnSaveP" type="button">Save changes</button>
-    <button class="ghost" id="btnReset" type="button">Discard unsaved changes</button>
+    <button class="ghost" id="btnDel" type="button" style="color:var(--warn);border-color:var(--warn)">Delete process</button>
     <span id="edState" class="edstate" aria-live="polite"></span>
   </div>
   <div class="ed">
@@ -221,7 +219,6 @@ td.calc.bad{color:var(--warn)}
 </div>
 
 <div class="row" style="max-width:1200px;margin-bottom:14px">
-  <button class="pri" id="btnPrint" type="button" style="font-size:15px;padding:9px 18px">Print this sheet</button>
   <span class="hint" id="cnt" style="margin:0"></span>
 </div>
 </div>
@@ -295,17 +292,18 @@ let S={unit:1,f:{1:{mc:'20',proc:'',gsm:'250',dia:'65',unit:'in',kg:'68',lr:''},
 // always starts from the original defaults when the page is opened. Saved processes are never deleted: a 2nd backup copy is kept.
 const SKB=SK+'.backup';
 const readCustom=k=>{try{const s=JSON.parse(localStorage.getItem(k)||'null');return s&&s.custom&&typeof s.custom==='object'?s.custom:null}catch(e){return null}};
-{const c=readCustom(SK),d=readCustom(SKB);S.custom=Object.assign({},d||{},c||{})}
+{const c=readCustom(SK),d=readCustom(SKB);S.custom=c||d||{};
+  try{const h=JSON.parse(localStorage.getItem(SK)||'null');S.hidden=Array.isArray(h&&h.hidden)?h.hidden:[]}catch(e){S.hidden=[]}}
 const save=()=>{try{
   const old=localStorage.getItem(SK);
   if(old&&readCustom(SK)&&JSON.stringify(readCustom(SK))!==JSON.stringify(S.custom))localStorage.setItem(SKB,old);
-  localStorage.setItem(SK,JSON.stringify({custom:S.custom}))}catch(e){}};
+  localStorage.setItem(SK,JSON.stringify({custom:S.custom,hidden:S.hidden||[]}))}catch(e){}};
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 const ck=id=>S.unit===1?'U1-'+id:id; // custom-edit key, unique per unit
 const orig=id=>LIB.find(p=>p.id===id&&p.u===S.unit);
 const DRAFT={}; // unsaved edits: memory only, never stored, so a reload returns to the saved/original version
 const proc=id=>DRAFT[ck(id)]||S.custom[ck(id)]||orig(id)||EMPTY();
-const allIds=()=>{const ids=LIB.filter(p=>p.u===S.unit).map(p=>p.id);Object.keys(S.custom).concat(Object.keys(DRAFT)).forEach(k=>{const c=DRAFT[k]||S.custom[k];if(c&&(c.u||2)===S.unit&&!ids.includes(c.id))ids.push(c.id)});return ids};
+const allIds=()=>{const ids=LIB.filter(p=>p.u===S.unit&&!(S.hidden||[]).includes(ck(p.id))).map(p=>p.id);Object.keys(S.custom).concat(Object.keys(DRAFT)).forEach(k=>{const c=DRAFT[k]||S.custom[k];if(c&&(c.u||2)===S.unit&&!ids.includes(c.id))ids.push(c.id)});return ids};
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ---------- calc
@@ -399,7 +397,7 @@ function sheetHTML(r,c){
   const lw=c.ok?`${f(c.lw,2)} g/m`:'', rl=c.ok?`${f(c.rl,1)} m`:'', rs=c.ok?`${f(c.reel,0)} m/min`:'';
   const lev=c.ok&&c.lev>0?`${Math.round(c.lev)} L`:'';
   const dia=r.gsm?`${esc(r.dia)} ${r.unit==='cm'?'cm':'inch'}${c.ok&&r.unit==='cm'?` (${f(c.inch,1)} in)`:''}`:'';
-  const water=`<div class="water"><div class="wb"><span><small>LEVELLING WATER (LTR)</small></span>${S.lev!==false&&lev?`<span>${lev}</span>`:'<i></i>'}</div><div class="wb"><span><small>DYEBATH WATER %</small></span><i></i></div></div>`;
+  const water=`<div class="water"><div class="wb"><span><small>LEVELLING WATER (LTR)</small></span>${S.lev!==false&&lev?`<span>${lev}</span>`:''}</div><div class="wb"><span><small>DYEBATH WATER %</small></span></div></div>`;
   return `<section class="sheet">
   <div class="sh-top"><div class="cell"><small>Dyeing start</small>&nbsp;</div><div class="cell"><small>Total water</small>&nbsp;</div><div class="cell"><small>Date</small><b>${esc(fmtDate(S.date))}</b></div><div class="cell"><small>Batch no</small>&nbsp;</div></div>
   <div class="sh-title">${esc(p.title)}</div>
@@ -480,7 +478,7 @@ $('fMc').addEventListener('input',e=>{
   EID=null;S.rows=[cur()];renderRows();renderEditor();renderSheets();save()});
 NAV.forEach(id=>{const el=$(id);if(el.tagName==='INPUT')el.addEventListener('click',()=>{try{el.select()}catch(e){}})});
 $('btnPrint2').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();$('cyc').focus()}});
-$('btnPrint').onclick=$('btnPrint2').onclick=()=>window.print();
+$('btnPrint2').onclick=()=>window.print();
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{dropDrafts();S.unit=+b.dataset.u;S.rows=[cur()];EID=null;renderRows();renderEditor();renderSheets();save()}));
 function renderSheets(){
   const r=cur();const parts=[sheetHTML(r,calc(r))];
@@ -522,8 +520,6 @@ function markDirty(){stateMsg()}
 $('gsUrl').value=GS.url;$('gsKey').value=GS.key;
 $('gsUrl').addEventListener('input',e=>{GS.url=e.target.value.trim();saveR()});
 $('gsKey').addEventListener('input',e=>{GS.key=e.target.value;saveR()});
-$('gsSave').onclick=()=>saveProc();
-$('gsLoad').onclick=()=>gsPull();
 if(!GS.url)$('gsState').textContent='(not connected)';
 $('gchip').textContent='☁ Google script connected';$('gchip').title=GS.url+'\n(click to copy the Google script URL)';
 $('gchip').onclick=()=>{try{navigator.clipboard.writeText(GS.url);gsMsg('Script URL copied')}catch(e){}};
@@ -586,7 +582,18 @@ function saveProc(){
   if(GS.url)gsPush(EID)}
 $('btnSaveP').onclick=saveProc;
 // never deletes a saved process: it only throws away edits you have not saved yet
-$('btnReset').onclick=()=>{delete DRAFT[ck(EID)];renderEditor();renderSheets();renderRows();stateMsg();fillDef()};
+$('btnDel').onclick=()=>{
+  if(!EID)return;const ids=allIds();
+  if(ids.length<=1){alert('You cannot delete the last process in this unit.');return}
+  const id=EID,k=ck(id);
+  if(!confirm('Delete process '+id+' ('+(proc(id).title||'')+') permanently?\nThis cannot be undone.'))return;
+  const wasSaved=!!S.custom[k];
+  delete DRAFT[k];delete S.custom[k];
+  if(orig(id)){S.hidden=S.hidden||[];if(!S.hidden.includes(k))S.hidden.push(k)}
+  save();
+  if(wasSaved&&GS.url)gsDelete(id);
+  EID=allIds()[0]||null;cur().proc=EID||'';S.rows=[cur()];
+  renderEditor();renderRows();renderSheets();stateMsg('✓ Deleted process '+id)};
 $('btnDup').onclick=()=>{const src=edProc();let n=14;while(allIds().includes(String(n)))n++;const id=String(n);DRAFT[ck(id)]=Object.assign(clone(src),{id,u:S.unit,title:src.title.replace(/ - \S+$/,'')+' - '+id+' (new)',verify:false});EID=id;cur().proc=id;S.rows=[cur()];save();markDirty();renderEditor();renderRows();renderSheets()};
 function fillDef(){showName()}
 
