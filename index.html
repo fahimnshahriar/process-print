@@ -53,7 +53,7 @@ td.calc.bad{color:var(--warn)}
 .n{width:78px}.num{width:84px}.sm{width:64px}
 .hint{font-size:12px;color:var(--muted);margin:8px 0 0}
 .warn{color:var(--warn)}
-.ed{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px}
+.ed{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px}
 @media (max-width:980px){.ed{grid-template-columns:1fr}}
 .prev{border:1px solid var(--line);border-radius:4px;background:#fff;padding:6px;overflow-x:auto}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin-top:8px}
@@ -132,22 +132,130 @@ td.calc.bad{color:var(--warn)}
 .fin p{margin:0 0 3.5mm;font-size:12.5pt}
 .fin h3{font-size:14pt;text-align:center;margin:0 0 5mm}
 .empty{max-width:1200px;text-align:center;color:var(--muted);padding:30px}
+
+/* ================= WOW interface layer (screen only) ================= */
+:root{
+  --bg:#eef1f7; --panel:#ffffff; --fg:#141a2e; --muted:#667089; --line:#e1e6f0;
+  --accent:#4f46e5; --accent2:#06b6d4; --accent-fg:#ffffff; --warn:#e11d48; --field:#f7f9fd; --sel:#eef0ff;
+  --grad:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#06b6d4 100%);
+  --shadow:0 1px 2px rgba(20,26,46,.06),0 8px 28px -8px rgba(40,50,110,.22);
+  --r:16px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1020; --panel:#141b33; --fg:#e8ecfa; --muted:#93a0c4; --line:#262f52;
+  --accent:#8b8bff; --accent2:#22d3ee; --accent-fg:#0b1020; --warn:#fb7185; --field:#0f1630; --sel:#1b2447;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -10px rgba(0,0,0,.6);color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0b1020; --panel:#141b33; --fg:#e8ecfa; --muted:#93a0c4; --line:#262f52;
+  --accent:#8b8bff; --accent2:#22d3ee; --accent-fg:#0b1020; --warn:#fb7185; --field:#0f1630; --sel:#1b2447;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -10px rgba(0,0,0,.6);color-scheme:dark;}
+body{background:radial-gradient(1100px 520px at 12% -8%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 70%),radial-gradient(900px 480px at 100% 0%,color-mix(in srgb,var(--accent2) 14%,transparent),transparent 70%),var(--bg);
+  background-attachment:fixed;padding:0 clamp(12px,3vw,32px) 60px;counter-reset:sec}
+.noprint{max-width:1240px;margin:0 auto}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;margin:0 calc(-1*clamp(12px,3vw,32px)) 18px;padding:10px clamp(12px,3vw,32px);
+  background:color-mix(in srgb,var(--panel) 78%,transparent);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--line)}
+.topbar .logo{width:38px;height:38px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 6px 16px -4px rgba(79,70,229,.6)}
+.topbar .tt1{font-weight:800;font-size:16px;letter-spacing:-.01em;line-height:1.1}
+.topbar .tt2{font-size:11.5px;color:var(--muted)}
+.topbar .sp{flex:1}
+.topbar .pill{font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--sel);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);white-space:nowrap}
+/* hero */
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:26px 30px;margin-bottom:20px;color:#fff;background:var(--grad);box-shadow:0 18px 40px -16px rgba(79,70,229,.55)}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.12)}
+.hero::before{width:260px;height:260px;right:-60px;top:-110px}.hero::after{width:160px;height:160px;right:140px;bottom:-90px;background:rgba(255,255,255,.08)}
+.hero h1{font-size:clamp(22px,3.2vw,32px);font-weight:850;letter-spacing:-.02em;margin:0 0 6px;position:relative}
+.hero p{margin:0;max-width:720px;opacity:.92;font-size:14px;position:relative}
+.hero .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;position:relative}
+.hero .chips span{font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28)}
+/* cards */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:20px;max-width:none;box-shadow:var(--shadow)}
+h2{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:800;letter-spacing:.02em;text-transform:none;color:var(--fg);margin:0 0 16px}
+h2::before{counter-increment:sec;content:counter(sec);width:30px;height:30px;border-radius:10px;background:var(--grad);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800;box-shadow:0 6px 14px -4px rgba(79,70,229,.55)}
+.row{gap:14px}
+label.f{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);gap:5px}
+input,select,button{border-radius:11px;border:1.5px solid var(--line);padding:9px 11px;transition:border-color .15s,box-shadow .15s,background .15s,transform .1s}
+input,select{background:var(--field)}
+input:hover,select:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 20%,transparent)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 28%,transparent)}
+input.num,input.n,input.sm,label.f input{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px;padding:0}
+button{font-weight:700;background:var(--panel)}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:active{transform:translateY(1px) scale(.98)}
+button.pri{background:var(--grad);color:#fff;border:0;box-shadow:0 10px 22px -8px rgba(79,70,229,.65);padding:10px 20px}
+button.pri:hover{color:#fff;filter:brightness(1.08);box-shadow:0 14px 26px -8px rgba(79,70,229,.75);transform:translateY(-1px)}
+button.ghost{background:transparent}
+#btnDel:hover{background:var(--warn);color:#fff!important}
+/* unit switch */
+.seg{display:inline-flex;gap:4px;padding:4px;border:0;border-radius:14px;background:var(--sel)}
+.seg button{border:0;border-radius:11px;padding:10px 20px;background:transparent;color:var(--muted)}
+.seg button[aria-selected=true]{background:var(--panel);color:var(--accent);box-shadow:0 4px 12px -3px rgba(40,50,110,.3)}
+/* process name */
+.pname{font-size:16px;font-weight:800;color:var(--accent)}
+/* result tiles */
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;padding:0;background:transparent;font-family:var(--font)}
+.res span{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:var(--sel);border:1px solid color-mix(in srgb,var(--accent) 14%,transparent);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.res span b{font-size:21px;letter-spacing:-.01em;text-transform:none;color:var(--fg);font-variant-numeric:tabular-nums}
+.res span.warn{grid-column:1/-1;flex-direction:row;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent);text-transform:none;font-size:13px}
+.hint{font-size:12.5px}
+details.gs,details.hintbox{border:1.5px dashed var(--line);border-radius:12px;padding:10px 14px;background:transparent}
+details summary{cursor:pointer;font-weight:700;color:var(--muted)}
+details[open] summary{color:var(--accent)}
+details.hintbox{margin-top:12px}
+/* editor */
+.tw{border:1px solid var(--line);border-radius:14px;padding:6px 8px;background:var(--panel)}
+th{font-weight:800;color:var(--muted);padding:8px 6px}
+td{border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.steps tr[data-i] td:first-child{border-radius:10px 0 0 10px}
+.steps tr[data-i] td:last-child{border-radius:0 10px 10px 0}
+.steps input,.steps select{background:color-mix(in srgb,var(--panel) 80%,transparent);font-weight:600}
+.insbtn{border-radius:999px}
+.prev{border-radius:14px;border:1px solid var(--line);background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),var(--shadow)}
+#edTotal{display:inline-block;padding:7px 14px;border-radius:999px;background:var(--sel);color:var(--accent);font-size:13px}
+.legend span{padding:4px 10px;border-radius:999px;background:var(--sel)}
+.edstate.un{color:#d97706}.edstate.ok{color:#059669}
+/* desk with paper preview */
+.deskhd{max-width:1240px;margin:8px auto 12px;display:flex;align-items:center;gap:12px;font-weight:800;font-size:15px}
+.deskhd small{font-weight:600;color:var(--muted);font-size:12.5px}
+.deskhd .dot{width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 0 5px rgba(16,185,129,.2);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 9px rgba(16,185,129,0)}}
+.sheetwrap{max-width:1240px;margin:0 auto;padding:30px 12px 10px;border-radius:22px;
+  background:radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--muted) 35%,transparent) 1px,transparent 0) 0 0/22px 22px,color-mix(in srgb,var(--muted) 12%,var(--bg))}
+.sheet{box-shadow:0 2px 4px rgba(0,0,0,.12),0 24px 50px -14px rgba(20,26,60,.45);border-radius:2px}
+.gchip{border-radius:999px;box-shadow:var(--shadow);font-weight:600}
+.empty{color:var(--muted)}
+@media screen and (max-width:900px){.sheet{zoom:.55;margin-bottom:0}.hero{padding:20px}.topbar .tt2{display:none}}
+@media screen and (max-width:560px){.sheet{zoom:.42}.res{grid-template-columns:1fr 1fr}.topbar .pill{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @page{size:A4 portrait;margin:0}
 @media print{
   body{background:#fff;padding:0}
   .noprint{display:none!important}
-  .sheetwrap{max-width:none}
+  .sheetwrap{max-width:none;padding:0;background:none;border-radius:0;margin:0}
+  .sheet{zoom:1!important;border-radius:0}
   .sheet{box-shadow:none;margin:0;width:210mm;height:296.5mm;overflow:hidden}
 }
 </style>
 </head>
 <body>
 <div class="noprint">
-<h1>Dyeing Process Sheet Printer</h1>
-<p class="sub">Type the MC number: MC 1-23 opens Unit 1 and MC 101-106 opens Unit 2 automatically, and the process number is searched in that unit's own process folder. Then enter the process number, GSM and dia, then press Print. The sheet below is exactly what prints.</p>
+<div class="topbar">
+  <div class="logo" aria-hidden="true">🧵</div>
+  <div><div class="tt1">Process Sheet Printer</div><div class="tt2">Dyeing &middot; Unit 1 &amp; Unit 2</div></div>
+  <div class="sp"></div>
+  <span class="pill" id="topPill">Live A4 preview below</span>
+  <button class="pri" id="btnPrintTop" type="button">🖨 Print</button>
+</div>
+<div class="hero">
+  <h1>Dyeing Process Sheet Printer</h1>
+  <p>Type the MC number, process number, GSM and dia. The sheet below is exactly what prints.</p>
+  <div class="chips"><span>MC 1-23 &rarr; Unit 1</span><span>MC 101-106 &rarr; Unit 2</span><span>Ctrl + Enter = Print</span><span>Enter = next field</span></div>
+</div>
 
 <div class="panel">
-  <h2>1. Print one machine</h2>
+  <h2>Print one machine</h2>
   <div class="seg" role="tablist" style="margin-bottom:12px">
     <button type="button" data-u="1" role="tab">Unit 1 &nbsp;(MC 1 - 23)</button>
     <button type="button" data-u="2" role="tab">Unit 2 &nbsp;(MC 101 - 106)</button>
@@ -177,11 +285,11 @@ td.calc.bad{color:var(--warn)}
     <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optChecks" checked> Print check list</label>
     <label class="f" style="flex-direction:row;align-items:center;gap:6px;color:var(--fg)"><input type="checkbox" id="optFin"> Add finishing notes page</label>
   </div>
-  <p class="hint">L/W = GSM x dia(inch) x 0.0254. R/L = load kg x 1000 / (L/W x nozzles). Reel speed = R/L / cycle time. If Load kg is empty the machine capacity is used; if L:R is empty the machine's minimum water is used. Levelling water (tick "Show levelling water" to print it) = total liquor - (tank fills x tank size) - (load x absorbency), same as RECIPE_CALCULATOR.xlsx. Unit 1 and Unit 2 each remember their own last entry. Keys: Enter, Down or Right arrow = next field; Up or Left arrow = previous field; Ctrl+Enter = print.</p>
+  <details class="hintbox"><summary>How the numbers are calculated</summary>  <p class="hint">L/W = GSM x dia(inch) x 0.0254. R/L = load kg x 1000 / (L/W x nozzles). Reel speed = R/L / cycle time. If Load kg is empty the machine capacity is used; if L:R is empty the machine's minimum water is used. Levelling water (tick "Show levelling water" to print it) = total liquor - (tank fills x tank size) - (load x absorbency), same as RECIPE_CALCULATOR.xlsx. Unit 1 and Unit 2 each remember their own last entry. Keys: Enter, Down or Right arrow = next field; Up or Left arrow = previous field; Ctrl+Enter = print.</p></details>
 </div>
 
 <div class="panel">
-  <h2>2. Process graph</h2>
+  <h2>Process graph</h2>
   <details class="gs" id="gsBox">
     <summary>Google save <span id="gsState" class="hint" style="margin:0 0 0 8px"></span></summary>
     <div class="row" style="margin:10px 0">
@@ -223,6 +331,7 @@ td.calc.bad{color:var(--warn)}
 </div>
 </div>
 
+<div class="deskhd noprint"><span class="dot"></span>Live preview <small>A4 &middot; prints exactly like this</small></div>
 <div class="sheetwrap" id="sheets"></div>
 <div class="gchip noprint" id="gchip" role="status">☁ Google script</div>
 
@@ -448,6 +557,8 @@ function showRes(){
 }
 function refresh(full){S.rows=[cur()];if(full)renderRows();else showRes();renderSheets();save()}
 [['fMc','mc'],['fGsm','gsm'],['fDia','dia'],['fKg','kg'],['fLr','lr']].forEach(([id,k])=>$(id).addEventListener('input',e=>{cur()[k]=e.target.value.trim();refresh(false)}));
+$('fUnit').addEventListener('change',e=>{cur().unit=e.target.value;refresh(false)});
+$('fUnit').addEventListener('input',e=>{cur().unit=e.target.value;refresh(false)});
 function showName(bad){const el=$('pname'),p=proc(cur().proc);el.classList.toggle('bad',!!bad);el.innerHTML=bad?'No process with this number.':`${esc(p.id)} - ${esc(p.title.replace(/\s*-\s*\S+$/,''))}${p.sub?`<small>${esc(p.sub)}</small>`:''}`}
 function findProc(v){v=String(v).trim().toUpperCase();if(!v)return null;const ids=allIds();if(ids.includes(v))return v;if(/^\d+$/.test(v)){const t=v.padStart(2,'0');if(ids.includes(t))return t}return null}
 $('fPno').addEventListener('input',e=>{const id=findProc(e.target.value);const bad=!id&&e.target.value.trim()!=='';e.target.style.borderColor=bad?'var(--warn)':'';
@@ -478,7 +589,7 @@ $('fMc').addEventListener('input',e=>{
   EID=null;S.rows=[cur()];renderRows();renderEditor();renderSheets();save()});
 NAV.forEach(id=>{const el=$(id);if(el.tagName==='INPUT')el.addEventListener('click',()=>{try{el.select()}catch(e){}})});
 $('btnPrint2').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();$('cyc').focus()}});
-$('btnPrint2').onclick=()=>window.print();
+$('btnPrint2').onclick=$('btnPrintTop').onclick=()=>window.print();
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{dropDrafts();S.unit=+b.dataset.u;S.rows=[cur()];EID=null;renderRows();renderEditor();renderSheets();save()}));
 function renderSheets(){
   const r=cur();const parts=[sheetHTML(r,calc(r))];
